@@ -1,0 +1,114 @@
+{
+  "header":{"title":"Translate"},
+  "sections": [
+    {
+      "widgets": [
+        {
+          "columns": {
+            "columnItems": [
+              {
+                "widgets": [
+                  {
+                    "selectionInput": {
+                      "type": "DROPDOWN",
+                      "label": "Source",
+                      "name": "select1",
+                      "items": [
+                        {
+                          "text": "Choice 1",
+                          "value": "1",
+                          "selected": false
+                        },
+                        {
+                          "text": "Choice 2",
+                          "value": "2",
+                          "selected": false
+                        },
+                        {
+                          "text": "Choice 3",
+                          "value": "3",
+                          "selected": false
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "widgets": [
+                  {
+                    "selectionInput": {
+                      "type": "DROPDOWN",
+                      "label": "Target",
+                      "name": "select1",
+                      "items": [
+                        {
+                          "text": "Choice 1",
+                          "value": "1",
+                          "selected": false
+                        },
+                        {
+                          "text": "Choice 2",
+                          "value": "2",
+                          "selected": false
+                        },
+                        {
+                          "text": "Choice 3",
+                          "value": "3",
+                          "selected": false
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "textInput": {
+            "label": "Text input",
+            "type": "MULTIPLE_LINE",
+            "name": "text",
+            "onChangeAction": {
+              "function": "translate",
+              "parameters": []
+            },
+            "hintText": "Enter the text to translate"
+          }
+        },
+        {
+          "decoratedText": {
+            "topLabel": "",
+            "text": "",
+            "button": {
+              "text": "Translate",
+              "onClick": {
+                "action": {
+                  "function": "translate",
+                  "parameters": []
+                }
+              }
+            },
+            "onClick": {
+              "action": {
+                "function": "translate",
+                "parameters": []
+              }
+            }
+          }
+        },
+        {
+          "textInput": {
+            "label": "Result",
+            "type": "MULTIPLE_LINE",
+            "name": "result",
+            "hintText": "",
+            "value": ""
+          }
+        }
+      ]
+    }
+  ],
+  "displayStyle": "DISPLAY_STYLE_UNSPECIFIED"
+}

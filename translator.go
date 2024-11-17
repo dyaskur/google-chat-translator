@@ -1,4 +1,4 @@
-package helloworld
+package translator
 
 import (
 	"cloud.google.com/go/translate"
@@ -7,27 +7,40 @@ import (
 	"golang.org/x/text/language"
 )
 
-func translateText(targetLanguage, text string) (string, error) {
+func translateText(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
 	// text := "The Go Gopher is cute"
 	ctx := context.Background()
 
 	lang, err := language.Parse(targetLanguage)
 	if err != nil {
-		return "", fmt.Errorf("language.Parse: %w", err)
+		return "", "", fmt.Errorf("language target.Parse: %w", err)
 	}
 
 	client, err := translate.NewClient(ctx)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	defer client.Close()
-
-	resp, err := client.Translate(ctx, []string{text}, lang, nil)
+	defer func(client *translate.Client) {
+		err := client.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(client)
+	opts := &translate.Options{}
+	opts.Format = translate.Text
+	if sourceLanguage != "" && sourceLanguage != "auto" {
+		source, err := language.Parse(sourceLanguage)
+		if err != nil {
+			return "", "", fmt.Errorf("language source.Parse: %w", err)
+		}
+		opts.Source = source
+	}
+	resp, err := client.Translate(ctx, []string{text}, lang, opts)
 	if err != nil {
-		return "", fmt.Errorf("Translate: %w", err)
+		return "", "", fmt.Errorf("translate: %w", err)
 	}
 	if len(resp) == 0 {
-		return "", fmt.Errorf("Translate returned empty response to text: %s", text)
+		return "", "", fmt.Errorf("translate returned empty response to text: %s", text)
 	}
-	return resp[0].Text, nil
+	return resp[0].Text, resp[0].Source.String(), nil
 }
