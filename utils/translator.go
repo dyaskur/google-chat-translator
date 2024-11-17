@@ -1,4 +1,4 @@
-package translator
+package utils
 
 import (
 	"cloud.google.com/go/translate"
@@ -7,7 +7,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-func translateText(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
+func TranslateText(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
 	// text := "The Go Gopher is cute"
 	ctx := context.Background()
 

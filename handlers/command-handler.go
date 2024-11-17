@@ -1,4 +1,4 @@
-package translator
+package handlers
 
 import (
 	"google.golang.org/api/chat/v1"
@@ -7,12 +7,14 @@ import (
 	"yaskur.com/chat-translator/utils"
 )
 
-func commandHandler(event chat.DeprecatedEvent) chat.Message {
+func CommandHandler(event chat.DeprecatedEvent) chat.Message {
 	message := event.Message
+	commandId := int16(message.SlashCommand.CommandId)
 	log.Printf("commandID: %s", strconv.FormatInt(message.SlashCommand.CommandId, 10))
 	targetLanguage := utils.GetById(int16(message.SlashCommand.CommandId))
+	targetLanguage := utils.GetById(commandId)
 	log.Printf("targetLanguage: %s", targetLanguage.Code)
-	translatedText, source, err := translateText(targetLanguage.Code, message.ArgumentText, "")
+	translatedText, source, err := utils.TranslateText(targetLanguage.Code, message.ArgumentText, "")
 	if err != nil {
 		log.Fatal(err)
 	}

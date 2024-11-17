@@ -1,4 +1,4 @@
-package translator
+package handlers
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func chatHandler(w http.ResponseWriter, r *http.Request) {
+func ChatHandler(w http.ResponseWriter, r *http.Request) {
 	var event chat.DeprecatedEvent
 	json.NewDecoder(r.Body).Decode(&event)
 	log.Printf(event.EventTime, event.Message.Text)
@@ -17,7 +17,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if event.Type == "MESSAGE" {
 		message := event.Message
 		if message.SlashCommand != nil {
-			reply = commandHandler(event)
+			reply = CommandHandler(event)
 		} else if message.Text != "" {
 			log.Printf(message.Text)
 			reply = chat.Message{

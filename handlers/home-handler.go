@@ -1,4 +1,4 @@
-package translator
+package handlers
 
 import (
 	"encoding/json"
@@ -96,9 +96,6 @@ func SelectionWidgets(formInput FormInput, detectedSource string) []*chat.Google
 									Label: "Source",
 									Name:  "source",
 									Items: sourceItems,
-									OnChangeAction: &chat.GoogleAppsCardV1Action{
-										Function: "translate",
-									},
 								},
 							},
 							},
@@ -110,6 +107,9 @@ func SelectionWidgets(formInput FormInput, detectedSource string) []*chat.Google
 									Label: "Target",
 									Name:  "target",
 									Items: targetItems,
+									OnChangeAction: &chat.GoogleAppsCardV1Action{
+										Function: "translate",
+									},
 								},
 							},
 							},
@@ -188,7 +188,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		translatedText, source, err := translateText(formInput.Target, formInput.Text, formInput.Source)
+		translatedText, source, err := utils.TranslateText(formInput.Target, formInput.Text, formInput.Source)
 		if err != nil {
 			log.Fatal(err)
 		}

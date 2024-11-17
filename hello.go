@@ -3,6 +3,7 @@ package translator
 import (
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"net/http"
+	"yaskur.com/chat-translator/handlers"
 )
 
 func init() {
@@ -15,9 +16,9 @@ func HelloHTTP(w http.ResponseWriter, r *http.Request) {
 	requestType := r.URL.Query().Get("r")
 
 	if requestType == "chat" {
-		chatHandler(w, r)
+		handlers.ChatHandler(w, r)
 	} else {
-		HomeHandler(w, r)
+		handlers.HomeHandler(w, r)
 	}
 
 }
