@@ -375,6 +375,8 @@ cloud.google.com/go/functions v1.15.3 h1:5bAA0oK69rdOzSyJGkEod90R9zpok2CRPi1du0g
 cloud.google.com/go/functions v1.15.3/go.mod h1:r/AMHwBheapkkySEhiZYLDBwVJCdlRwsm4ieJu35/Ug=
 cloud.google.com/go/functions v1.16.6 h1:tPe3/48RpjcFk96VeB6jOKQpK8nliGJLsgjh6pUOyFQ=
 cloud.google.com/go/functions v1.16.6/go.mod h1:wOzZakhMueNQaBUJdf0yjsJIe0GBRu+ZTvdSTzqHLs0=
+cloud.google.com/go/functions v1.19.2 h1:Cu2Gj1JBBJv9gi89r8LrZNsJhGwePnhttn4Blqw/EYI=
+cloud.google.com/go/functions v1.19.2/go.mod h1:SBzWwWuaFDLnUyStDAMEysVN1oA5ECLbP3/PfJ9Uk7Y=
 cloud.google.com/go/gaming v1.5.0/go.mod h1:ol7rGcxP/qHTRQE/RO4bxkXq+Fix0j6D4LFPzYTIrDM=
 cloud.google.com/go/gaming v1.6.0/go.mod h1:YMU1GEvA39Qt3zWGyAVA9bpYz/yAhTvaQ1t2sK4KPUA=
 cloud.google.com/go/gaming v1.7.0/go.mod h1:LrB8U7MHdGgFG851iHAfqUdLcKBdQ55hzXy9xBJz0+w=
