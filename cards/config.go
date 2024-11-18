@@ -1,9 +1,13 @@
 package cards
 
-import "google.golang.org/api/chat/v1"
+import (
+	"google.golang.org/api/chat/v1"
+	"strconv"
+	"yaskur.com/chat-translator/types"
+)
 
 // ConfigForm generates a card based on the provided configuration.
-func ConfigForm(showOriginalText bool) *chat.GoogleAppsCardV1Card {
+func ConfigForm(config types.Config) *chat.GoogleAppsCardV1Card {
 	return &chat.GoogleAppsCardV1Card{
 		Header: &chat.GoogleAppsCardV1CardHeader{
 			Title: "Abang Translator Config",
@@ -14,9 +18,18 @@ func ConfigForm(showOriginalText bool) *chat.GoogleAppsCardV1Card {
 					{
 						DecoratedText: &chat.GoogleAppsCardV1DecoratedText{
 							SwitchControl: &chat.GoogleAppsCardV1SwitchControl{
-								Selected:    showOriginalText,
+								Selected:    config.ShowOriginalText,
 								Name:        "show_original_text",
 								ControlType: "SWITCH",
+								OnChangeAction: &chat.GoogleAppsCardV1Action{
+									Function: "setShowOriginalText",
+									Parameters: []*chat.GoogleAppsCardV1ActionParameter{
+										{
+											Key:   "show_original_text",
+											Value: strconv.FormatBool(!config.ShowOriginalText),
+										},
+									},
+								},
 							},
 							StartIcon: &chat.GoogleAppsCardV1Icon{
 								KnownIcon: "CHECK",

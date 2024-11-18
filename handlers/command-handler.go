@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"google.golang.org/api/chat/v1"
 	"log"
 	"strconv"
 	"yaskur.com/chat-translator/cards"
+	"yaskur.com/chat-translator/types"
 	"yaskur.com/chat-translator/utils"
 )
 
@@ -12,6 +14,20 @@ func CommandHandler(event chat.DeprecatedEvent) chat.Message {
 	message := event.Message
 	commandId := int16(message.SlashCommand.CommandId)
 	log.Printf("commandID: %s", strconv.FormatInt(message.SlashCommand.CommandId, 10))
+	configKey := event.Space.Name
+	configJson, _ := utils.GetCache(configKey)
+
+	var config types.Config
+	if configJson != "" {
+		err := json.Unmarshal([]byte(configJson), &config)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		config = types.Config{
+			ShowOriginalText: true,
+		}
+	}
 	if commandId == 1 {
 		// commandId 1 = /config
 		reply := chat.Message{
@@ -19,7 +35,7 @@ func CommandHandler(event chat.DeprecatedEvent) chat.Message {
 				Type: "DIALOG",
 				DialogAction: &chat.DialogAction{
 					Dialog: &chat.Dialog{
-						Body: cards.ConfigForm(false),
+						Body: cards.ConfigForm(config),
 					},
 				},
 			},
@@ -37,7 +53,9 @@ func CommandHandler(event chat.DeprecatedEvent) chat.Message {
 
 	user := event.User
 	response := "_" + user.DisplayName + " said: (translated to " + targetLanguage.Language + ")_\n" + translatedText
-	response = response + "\nTranslated from " + sourceLanguage.Language + ", original message:\n" + message.ArgumentText
+	if config.ShowOriginalText {
+		response = response + "\nTranslated from " + sourceLanguage.Language + ", original message:\n" + message.ArgumentText
+	}
 	reply := chat.Message{
 		ActionResponse: &chat.ActionResponse{
 			Type: "NEW_MESSAGE",
