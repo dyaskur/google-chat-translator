@@ -1,4 +1,4 @@
-package main
+package translator
 
 import (
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"

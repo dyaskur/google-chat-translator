@@ -193,6 +193,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	var errorMessage string
 	var translatedText string
 	var source string
+	configKey := "home_" + event.Chat.User.Name
 	if event.Chat.Type == "SUBMIT_FORM" {
 		formInput = getFormInput(event.CommonEventObject)
 		err := validateFormInput(formInput)
@@ -204,6 +205,9 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("error translate: %v", err)
 				errorMessage = fmt.Sprint(err)
+			} else {
+				configJson, _ := json.Marshal(formInput)
+				utils.SetCache(configKey, string(configJson))
 			}
 		}
 		formInput.Result = translatedText
@@ -213,6 +217,13 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			}},
 		}}
 	} else {
+		lastInputJson, _ := utils.GetCache(configKey)
+		if lastInputJson != "" {
+			err := json.Unmarshal([]byte(lastInputJson), &formInput)
+			if err != nil {
+				panic(err)
+			}
+		}
 		result = RenderAction{Action: Action{
 			Navigation: []Navigation{{
 				PushCard: TranslateForm(formInput, "", errorMessage).Card,
