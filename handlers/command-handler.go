@@ -41,6 +41,28 @@ func CommandHandler(event chat.DeprecatedEvent) chat.Message {
 			},
 		}
 		return reply
+	} else if commandId == 3 {
+		// commandId 1 = /translate
+
+		var formInput types.FormInput
+		lastInputJson, _ := utils.GetCache(configKey)
+		if lastInputJson != "" {
+			err := json.Unmarshal([]byte(lastInputJson), &formInput)
+			if err != nil {
+				panic(err)
+			}
+		}
+		reply := chat.Message{
+			ActionResponse: &chat.ActionResponse{
+				Type: "DIALOG",
+				DialogAction: &chat.DialogAction{
+					Dialog: &chat.Dialog{
+						Body: cards.TranslateForm(formInput, "", "").Card,
+					},
+				},
+			},
+		}
+		return reply
 	}
 
 	targetLanguage := utils.GetById(commandId)

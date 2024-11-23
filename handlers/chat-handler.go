@@ -17,8 +17,10 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%#v", event)
 	commonJson, _ := json.Marshal(event.Common.FormInputs)
 	actionJson, _ := json.Marshal(event.Action)
-	log.Printf("Common %#v", commonJson)
-	log.Printf("Action %#v", actionJson)
+	log.Printf("event.Type %s; InvokedFunction %s;", event.Type, event.Common.InvokedFunction)
+	log.Printf("Common %s", commonJson)
+	log.Printf("Action %s", actionJson)
+
 	var reply chat.Message
 	if event.Type == "MESSAGE" {
 		message := event.Message
@@ -41,7 +43,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-	} else if event.Type == "CARD_CLICKED" {
+	} else if event.Type == "CARD_CLICKED" || event.Type == "SUBMIT_FORM" {
 		reply = ActionHandler(event)
 	} else if event.Type == "ADDED_TO_SPACE" {
 

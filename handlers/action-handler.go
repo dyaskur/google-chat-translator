@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"google.golang.org/api/chat/v1"
+	"log"
 	"strconv"
 	"yaskur.com/chat-translator/cards"
 	"yaskur.com/chat-translator/types"
@@ -32,6 +33,39 @@ func ActionHandler(event chat.DeprecatedEvent) chat.Message {
 				},
 			},
 		}
+	} else if event.Action.ActionMethodName == "translate" {
+		configKey := "home_" + event.User.Name
+		var formInput types.FormInput
+		var errorMessage string
+		var translatedText string
+		var source string
+		formInput = getFormInput(*event.Common)
+		err := validateFormInput(formInput)
+		if err != nil {
+			log.Printf("invalid validation: %v", err)
+			errorMessage = fmt.Sprint(err)
+		} else {
+			translatedText, source, err = utils.TranslateText(formInput.Target, formInput.Text, formInput.Source)
+			if err != nil {
+				log.Printf("error translate: %v", err)
+				errorMessage = fmt.Sprint(err)
+			} else {
+				configJson, _ := json.Marshal(formInput)
+				utils.SetCache(configKey, string(configJson))
+			}
+		}
+		formInput.Result = translatedText
+		reply = chat.Message{
+			ActionResponse: &chat.ActionResponse{
+				Type: "DIALOG",
+				DialogAction: &chat.DialogAction{
+					Dialog: &chat.Dialog{
+						Body: cards.TranslateForm(formInput, source, errorMessage).Card,
+					},
+				},
+			},
+		}
+
 	}
 	return reply
 }

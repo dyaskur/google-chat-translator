@@ -6,6 +6,8 @@ import (
 	"google.golang.org/api/chat/v1"
 	"log"
 	"net/http"
+	"yaskur.com/chat-translator/cards"
+	"yaskur.com/chat-translator/types"
 	"yaskur.com/chat-translator/utils"
 )
 
@@ -37,121 +39,7 @@ type ChatRequest struct {
 	Chat                     Chat                     `json:"chat,omitempty"`
 }
 
-type FormInput struct {
-	Source string `json:"source,omitempty"`
-	Target string `json:"target,omitempty"`
-	Text   string `json:"text,omitempty"`
-	Result string `json:"result,omitempty"`
-}
-
-func TranslateForm(formInput FormInput, detectedLanguage string, error string) chat.CardWithId {
-
-	card := chat.CardWithId{
-		Card: &chat.GoogleAppsCardV1Card{
-			Header: &chat.GoogleAppsCardV1CardHeader{
-				Title:    "Translate",
-				Subtitle: error,
-			},
-			Sections: SelectionWidgets(formInput, detectedLanguage),
-		},
-	}
-	return card
-}
-
-func SelectionWidgets(formInput FormInput, detectedSource string) []*chat.GoogleAppsCardV1Section {
-	log.Printf(formInput.Source + " source")
-	var detectedLanguage string
-	if detectedSource != "" {
-		detectedLanguage = " - " + utils.GroupByCode()[detectedSource].Language
-	}
-	sourceItems := []*chat.GoogleAppsCardV1SelectionItem{
-		{
-			Text:     "Detected Language" + detectedLanguage,
-			Value:    "auto",
-			Selected: formInput.Source == "auto" || formInput.Source == "",
-		},
-	}
-	var targetItems []*chat.GoogleAppsCardV1SelectionItem
-	for _, v := range utils.LanguagesData {
-		sourceItems = append(sourceItems, &chat.GoogleAppsCardV1SelectionItem{
-			Text:     v.Language,
-			Value:    v.Code,
-			Selected: formInput.Source == v.Code,
-		})
-		targetItems = append(targetItems, &chat.GoogleAppsCardV1SelectionItem{
-			Text:     v.Language,
-			Value:    v.Code,
-			Selected: formInput.Target == v.Code,
-		})
-	}
-
-	return []*chat.GoogleAppsCardV1Section{
-		{Widgets: []*chat.GoogleAppsCardV1Widget{
-			{
-				Columns: &chat.GoogleAppsCardV1Columns{
-					ColumnItems: []*chat.GoogleAppsCardV1Column{
-						{
-							Widgets: []*chat.GoogleAppsCardV1Widgets{{
-								SelectionInput: &chat.GoogleAppsCardV1SelectionInput{
-									Type:  "DROPDOWN",
-									Label: "Source",
-									Name:  "source",
-									Items: sourceItems,
-								},
-							},
-							},
-						},
-						{
-							Widgets: []*chat.GoogleAppsCardV1Widgets{{
-								SelectionInput: &chat.GoogleAppsCardV1SelectionInput{
-									Type:  "DROPDOWN",
-									Label: "Target",
-									Name:  "target",
-									Items: targetItems,
-									OnChangeAction: &chat.GoogleAppsCardV1Action{
-										Function: "translate",
-									},
-								},
-							},
-							},
-						},
-					},
-				},
-			},
-			{TextInput: &chat.GoogleAppsCardV1TextInput{
-				Label:    "Text input",
-				Type:     "MULTIPLE_LINE",
-				Name:     "text",
-				HintText: "Enter the text to translate",
-				Value:    formInput.Text,
-				OnChangeAction: &chat.GoogleAppsCardV1Action{
-					Function: "translate",
-				},
-			}},
-			{
-				DecoratedText: &chat.GoogleAppsCardV1DecoratedText{
-					Text: "",
-					Button: &chat.GoogleAppsCardV1Button{
-						Text: "Translate",
-						OnClick: &chat.GoogleAppsCardV1OnClick{
-							Action: &chat.GoogleAppsCardV1Action{
-								Function: "translate",
-							},
-						},
-					},
-				},
-			},
-			{TextInput: &chat.GoogleAppsCardV1TextInput{
-				Label: "Result",
-				Type:  "MULTIPLE_LINE",
-				Name:  "result",
-				Value: formInput.Result,
-			}},
-		}},
-	}
-}
-
-func getFormInput(event chat.CommonEventObject) FormInput {
+func getFormInput(event chat.CommonEventObject) types.FormInput {
 	getValue := func(key string) string {
 		if inputs, exists := event.FormInputs[key]; exists && len(inputs.StringInputs.Value) > 0 {
 			return inputs.StringInputs.Value[0]
@@ -159,7 +47,7 @@ func getFormInput(event chat.CommonEventObject) FormInput {
 		return "" // Default value
 	}
 
-	return FormInput{
+	return types.FormInput{
 		Source: getValue("source"),
 		Target: getValue("target"),
 		Text:   getValue("text"),
@@ -167,7 +55,7 @@ func getFormInput(event chat.CommonEventObject) FormInput {
 	}
 }
 
-func validateFormInput(input FormInput) error {
+func validateFormInput(input types.FormInput) error {
 	var err error
 	if input.Target == "" || input.Text == "" {
 		err = fmt.Errorf("please fill target language and text")
@@ -188,7 +76,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf(event.Chat.Type)
 	log.Printf("%#v", event)
-	var formInput FormInput
+	var formInput types.FormInput
 	var result RenderAction
 	var errorMessage string
 	var translatedText string
@@ -213,7 +101,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		formInput.Result = translatedText
 		result = RenderAction{Action: Action{
 			Navigation: []Navigation{{
-				UpdateCard: TranslateForm(formInput, source, errorMessage).Card,
+				UpdateCard: cards.TranslateForm(formInput, source, errorMessage).Card,
 			}},
 		}}
 	} else {
@@ -226,7 +114,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		result = RenderAction{Action: Action{
 			Navigation: []Navigation{{
-				PushCard: TranslateForm(formInput, "", errorMessage).Card,
+				PushCard: cards.TranslateForm(formInput, "", errorMessage).Card,
 			}},
 		}}
 	}
