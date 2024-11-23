@@ -58,7 +58,8 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 				"`/japanese ¡Vamos a empezar!`\n" +
 				"`/russian Buenos dias`\n" +
 				"`/french Wie geht's?`\n" +
-				"`\n By default original message will be shown, use `/config` to change that`\n",
+				"`\n By default original message will be shown, use `/config` to change that`\n" +
+				"If you want to use translate form and see all available languages use `/translate` command",
 		}
 	}
 

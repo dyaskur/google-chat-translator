@@ -41,6 +41,22 @@ func CommandHandler(event chat.DeprecatedEvent) chat.Message {
 			},
 		}
 		return reply
+	} else if commandId == 2 {
+		reply := chat.Message{
+			ActionResponse: &chat.ActionResponse{
+				Type: "NEW_MESSAGE",
+			},
+			Text: "I can translate your messages to any language. " +
+				"Please use command to do translation" + "\ne.g: \n" +
+				"`/spanish Hello everyone`\n" +
+				"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
+				"`/japanese ¡Vamos a empezar!`\n" +
+				"`/russian Buenos dias`\n" +
+				"`/french Wie geht's?`\n" +
+				"`\n By default original message will be shown, use `/config` to change that`\n" +
+				"If you want to use translate form and see all available languages use `/translate` command\n",
+		}
+		return reply
 	} else if commandId == 3 {
 		// commandId 1 = /translate
 
