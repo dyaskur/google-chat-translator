@@ -1,4 +1,4 @@
-package translator
+package main
 
 import (
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
@@ -7,11 +7,11 @@ import (
 )
 
 func init() {
-	functions.HTTP("HelloHTTP", HelloHTTP)
+	functions.HTTP("TranslatorHTTP", TranslatorHTTP)
 }
 
-// HelloHTTP is an HTTP Cloud Function with a request parameter.
-func HelloHTTP(w http.ResponseWriter, r *http.Request) {
+// TranslatorHTTP is an HTTP Cloud Function with a request parameter.
+func TranslatorHTTP(w http.ResponseWriter, r *http.Request) {
 
 	requestType := r.URL.Query().Get("r")
 
