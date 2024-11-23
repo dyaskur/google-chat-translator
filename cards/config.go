@@ -32,7 +32,9 @@ func ConfigForm(config types.Config) *chat.GoogleAppsCardV1Card {
 								},
 							},
 							StartIcon: &chat.GoogleAppsCardV1Icon{
-								KnownIcon: "CHECK",
+								MaterialIcon: &chat.GoogleAppsCardV1MaterialIcon{
+									Name: "source_notes",
+								},
 							},
 							Text:        "Show Original Text: ",
 							BottomLabel: "If enabled, the original text will be shown in the response. If disabled, only the translated text will be shown.",

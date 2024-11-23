@@ -44,12 +44,13 @@ type FormInput struct {
 	Result string `json:"result,omitempty"`
 }
 
-func TranslateForm(formInput FormInput, detectedLanguage string) chat.CardWithId {
+func TranslateForm(formInput FormInput, detectedLanguage string, error string) chat.CardWithId {
 
 	card := chat.CardWithId{
 		Card: &chat.GoogleAppsCardV1Card{
 			Header: &chat.GoogleAppsCardV1CardHeader{
-				Title: "Translate",
+				Title:    "Translate",
+				Subtitle: error,
 			},
 			Sections: SelectionWidgets(formInput, detectedLanguage),
 		},
@@ -151,11 +152,18 @@ func SelectionWidgets(formInput FormInput, detectedSource string) []*chat.Google
 }
 
 func getFormInput(event chat.CommonEventObject) FormInput {
+	getValue := func(key string) string {
+		if inputs, exists := event.FormInputs[key]; exists && len(inputs.StringInputs.Value) > 0 {
+			return inputs.StringInputs.Value[0]
+		}
+		return "" // Default value
+	}
+
 	return FormInput{
-		Source: event.FormInputs["source"].StringInputs.Value[0],
-		Target: event.FormInputs["target"].StringInputs.Value[0],
-		Text:   event.FormInputs["text"].StringInputs.Value[0],
-		Result: event.FormInputs["result"].StringInputs.Value[0],
+		Source: getValue("source"),
+		Target: getValue("target"),
+		Text:   getValue("text"),
+		Result: getValue("result"),
 	}
 }
 
@@ -182,26 +190,32 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%#v", event)
 	var formInput FormInput
 	var result RenderAction
+	var errorMessage string
+	var translatedText string
+	var source string
 	if event.Chat.Type == "SUBMIT_FORM" {
 		formInput = getFormInput(event.CommonEventObject)
 		err := validateFormInput(formInput)
 		if err != nil {
-			log.Fatal(err)
-		}
-		translatedText, source, err := utils.TranslateText(formInput.Target, formInput.Text, formInput.Source)
-		if err != nil {
-			log.Fatal(err)
+			log.Printf("invalid validation: %v", err)
+			errorMessage = fmt.Sprint(err)
+		} else {
+			translatedText, source, err = utils.TranslateText(formInput.Target, formInput.Text, formInput.Source)
+			if err != nil {
+				log.Printf("error translate: %v", err)
+				errorMessage = fmt.Sprint(err)
+			}
 		}
 		formInput.Result = translatedText
 		result = RenderAction{Action: Action{
 			Navigation: []Navigation{{
-				UpdateCard: TranslateForm(formInput, source).Card,
+				UpdateCard: TranslateForm(formInput, source, errorMessage).Card,
 			}},
 		}}
 	} else {
 		result = RenderAction{Action: Action{
 			Navigation: []Navigation{{
-				PushCard: TranslateForm(formInput, "").Card,
+				PushCard: TranslateForm(formInput, "", errorMessage).Card,
 			}},
 		}}
 	}
