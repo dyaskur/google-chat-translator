@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"yaskur.com/chat-translator/types"
+	"yaskur.com/chat-translator/utils"
 )
 
 func getCommandName(event types.ChatEvent) string {
@@ -48,11 +49,13 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 			reply = CommandHandler(event)
 		} else if message.Text != "" {
 			log.Printf(message.Text)
+			greeting := utils.GetRandomGreeting(event.Common.UserLocale)
+			instruction := utils.GetRandomInstruction(event.Common.UserLocale)
 			reply = chat.Message{
 				ActionResponse: &chat.ActionResponse{
 					Type: "NEW_MESSAGE",
 				},
-				Text: "Hello, please use command to do translation" +
+				Text: greeting + "\n" + instruction +
 					"\ne.g: \n" +
 					"`/spanish Hello everyone`\n" +
 					"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
