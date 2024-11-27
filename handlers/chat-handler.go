@@ -5,8 +5,21 @@ import (
 	"google.golang.org/api/chat/v1"
 	"log"
 	"net/http"
+	"os"
 	"yaskur.com/chat-translator/types"
 )
+
+func getCommandName(event types.ChatEvent) string {
+	if event.Message == nil || event.Message.SlashCommand == nil || event.Message.Annotations == nil {
+		return ""
+	}
+	for _, element := range event.Message.Annotations {
+		if element.SlashCommand != nil {
+			return element.SlashCommand.CommandName
+		}
+	}
+	return ""
+}
 
 func ChatHandler(w http.ResponseWriter, r *http.Request) {
 	var event types.ChatEvent
@@ -14,16 +27,22 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	log.Printf(event.EventTime, event.Message.Text)
-	log.Printf("%#v", event)
-	commonJson, _ := json.Marshal(event.Common.FormInputs)
-	actionJson, _ := json.Marshal(event.Action)
-	log.Printf("event.Type %s; InvokedFunction %s;", event.Type, event.Common.InvokedFunction)
-	log.Printf("Common %s", commonJson)
-	log.Printf("Action %s", actionJson)
+	if os.Getenv("DEBUG") == "true" {
+		command := getCommandName(event)
+		locale := "err"
+		if event.Common != nil {
+			locale = event.Common.UserLocale
+		}
+		log.Printf("type %s; time %s; user %s; email %s; space %s; command %s; locale %s;", event.Type, event.EventTime, event.User.DisplayName, event.User.Email, event.Space.Type, command, locale)
+
+		if event.Message != nil {
+			messageJson, _ := json.Marshal(event.Message)
+			log.Printf("messageJson %s", messageJson)
+		}
+	}
 
 	var reply chat.Message
-	if event.Type == "MESSAGE" {
+	if event.Type == "MESSAGE" || event.Message != nil {
 		message := event.Message
 		if message.SlashCommand != nil {
 			reply = CommandHandler(event)
