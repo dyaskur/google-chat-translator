@@ -5,10 +5,11 @@ import (
 	"google.golang.org/api/chat/v1"
 	"log"
 	"net/http"
+	"yaskur.com/chat-translator/types"
 )
 
 func ChatHandler(w http.ResponseWriter, r *http.Request) {
-	var event chat.DeprecatedEvent
+	var event types.ChatEvent
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		return

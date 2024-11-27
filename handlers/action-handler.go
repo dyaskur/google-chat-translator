@@ -11,7 +11,7 @@ import (
 	"yaskur.com/chat-translator/utils"
 )
 
-func ActionHandler(event chat.DeprecatedEvent) chat.Message {
+func ActionHandler(event types.ChatEvent) chat.Message {
 	action := event.Common.InvokedFunction
 	reply := chat.Message{}
 	if action == "setShowOriginalText" {

@@ -10,12 +10,14 @@ import (
 	"yaskur.com/chat-translator/utils"
 )
 
-func CommandHandler(event chat.DeprecatedEvent) chat.Message {
+func CommandHandler(event types.ChatEvent) chat.Message {
 	message := event.Message
 	commandId := int16(message.SlashCommand.CommandId)
 	log.Printf("commandID: %s", strconv.FormatInt(message.SlashCommand.CommandId, 10))
 	configKey := event.Space.Name
 	configJson, _ := utils.GetCache(configKey)
+	messageJson, _ := json.Marshal(event.Message)
+	log.Printf("Message %s", messageJson)
 
 	var config types.Config
 	if configJson != "" {
