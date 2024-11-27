@@ -8,14 +8,24 @@ import (
 
 var ctx = context.Background()
 
-var redisURI = os.Getenv("REDIS_URI")
+var rdb *redis.Client
 
-var addr, _ = redis.ParseURL(redisURI)
-
-var rdb = redis.NewClient(addr)
+func client() *redis.Client {
+	if rdb != nil {
+		return rdb
+	}
+	redisURI, ok := os.LookupEnv("REDIS_URI")
+	if !ok {
+		println("REDIS_URI is not set")
+		redisURI = "redis://localhost:6379" // fallback to default URI if not set
+	}
+	var addr, _ = redis.ParseURL(redisURI)
+	rdb = redis.NewClient(addr)
+	return rdb
+}
 
 func SetCache(key string, val string) {
-	err := rdb.Set(ctx, key, val, 0).Err()
+	err := client().Set(ctx, key, val, 0).Err()
 	if err != nil {
 		println(err)
 		panic(err)
@@ -23,7 +33,7 @@ func SetCache(key string, val string) {
 }
 
 func GetCache(key string) (string, error) {
-	value, err := rdb.Get(ctx, key).Result()
+	value, err := client().Get(ctx, key).Result()
 	//if errors.Is(err, redis.Nil) {
 	//	// not exist
 	//	return ""
