@@ -49,8 +49,12 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 			reply = CommandHandler(event)
 		} else if message.Text != "" {
 			log.Printf(message.Text)
-			greeting := utils.GetRandomGreeting(event.Common.UserLocale)
-			instruction := utils.GetRandomInstruction(event.Common.UserLocale)
+			locale := "en"
+			if event.Common != nil {
+				locale = event.Common.UserLocale
+			}
+			greeting := utils.GetRandomGreeting(locale)
+			instruction := utils.GetRandomInstruction(locale)
 			reply = chat.Message{
 				ActionResponse: &chat.ActionResponse{
 					Type: "NEW_MESSAGE",

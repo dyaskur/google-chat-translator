@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math/rand"
+	"strings"
 )
 
 var helloMessages = map[string][]string{
@@ -27,9 +28,6 @@ var helloMessages = map[string][]string{
 		"こんにちは! 私はあなたにどんな言語に翻訳することができます。",
 		"こんにちは！私はあなたのメッセージをどんな言語にも翻訳できます。"},
 	"zh": {"你好! 我可以翻译您的消息到任何语言。",
-		"你好！我很高兴帮你把消息翻译成任何语言！",
-		"你好！我可以帮您将消息翻译成任何语言。"},
-	"zh-CN": {"你好! 我可以翻译您的消息到任何语言。",
 		"你好！我很高兴帮你把消息翻译成任何语言！",
 		"你好！我可以帮您将消息翻译成任何语言。"},
 	"id": {"Hai! Saya dapat mengubah pesan Anda ke bahasa apa pun.",
@@ -176,9 +174,6 @@ var instructions = map[string][]string{
 	"pl": {"Proszę użyj polecenia, aby przetłumaczyć swoją wiadomość.",
 		"Użyj polecenia, aby przetłumaczyć swoją wiadomość, proszę.",
 		"Użyj polecenia, aby przetłumaczyć swoją wiadomość, dziękuję!"},
-	"zh-CN": {"请使用命令来翻译您的消息。",
-		"使用命令翻译您的消息，谢谢。",
-		"请使用命令翻译您的消息，谢谢！"},
 	"ko": {"메시지를 번역하려면 명령어를 사용하세요.",
 		"메시지를 번역하려면 명령어를 사용해주세요.",
 		"메시지를 번역하려면 명령어를 사용해 주세요!"},
@@ -291,10 +286,16 @@ var instructions = map[string][]string{
 		"Gebruik asseblief die opdrag om jou boodskap te vertaal, dankie!"},
 }
 
+func getParentLanguage(locale string) string {
+	localeSlice := strings.Split(locale, "-")
+	return localeSlice[0]
+}
+
 func GetRandomGreeting(locale string) string {
 	if locale == "" {
 		locale = "en"
 	}
+	locale = getParentLanguage(locale)
 	greeting := helloMessages[locale]
 	if len(greeting) == 0 {
 		println(locale + " is not supported, defaulting to 'en' locale")

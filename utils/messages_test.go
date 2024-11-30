@@ -99,3 +99,36 @@ func TestGetRandomInstructionFallsBackToEnglish(t *testing.T) {
 		t.Errorf("GetRandomInstruction(%s) should not return empty result", locale)
 	}
 }
+
+// Returns base language code from locale with region (e.g. 'en-US' returns 'en')
+func TestGetParentLanguageFromLocaleWithRegion(t *testing.T) {
+	locale := "en-US"
+
+	result := getParentLanguage(locale)
+
+	if result != "en" {
+		t.Errorf("Expected 'en', got '%s'", result)
+	}
+}
+
+// without region
+func TestGetParentLanguage(t *testing.T) {
+	locale := "ru"
+
+	result := getParentLanguage(locale)
+
+	if result != "ru" {
+		t.Errorf("Expected 'ru' string, got '%s'", result)
+	}
+}
+
+// Empty string input
+func TestGetParentLanguageWithEmptyString(t *testing.T) {
+	locale := ""
+
+	result := getParentLanguage(locale)
+
+	if result != "" {
+		t.Errorf("Expected empty string, got '%s'", result)
+	}
+}
