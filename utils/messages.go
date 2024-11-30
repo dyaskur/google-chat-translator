@@ -147,6 +147,21 @@ var helloMessages = map[string][]string{
 	"af": {"Hallo! Ek kan jou boodskappe na enige taal vertaal.",
 		"Hallo! Ek kan jou help om jou boodskappe na enige taal te vertaal.",
 		"Hallo! Ek is hier om jou te help om jou boodskappe na enige taal te vertaal."},
+	"ms": {"Hai! Saya boleh menterjemah mesej anda ke mana-mana bahasa.",
+		"Halo! Saya di sini untuk membantu menterjemah mesej anda ke dalam mana-mana bahasa.",
+		"Hai! Gunakan saya untuk menterjemah mesej anda ke mana-mana bahasa!"},
+	"az": {"Salam! Mən sizin mesajınızı istənilən dilə tərcümə edə bilərəm.",
+		"Salam! Mən buradayam ki, mesajınızı istənilən dilə tərcümə etməyə kömək edim.",
+		"Salam! Mesajınızı tərcümə etmək üçün mənim köməyimdən istifadə edə bilərsiniz."},
+	"km": {"សួស្តី! ខ្ញុំអាចបកប្រែសាររបស់អ្នកទៅជាភាសាណាមួយ។",
+		"សួស្តី! ខ្ញុំនៅទីនេះដើម្បីជួយបកប្រែសាររបស់អ្នកទៅជាភាសាណាមួយ។",
+		"សួស្តី! ប្រើខ្ញុំដើម្បីបកប្រែសាររបស់អ្នកទៅជាភាសាណាមួយ!"},
+	"ca": {"Hola! Puc traduir els teus missatges a qualsevol idioma.",
+		"Hola! Estic aquí per ajudar-te a traduir els teus missatges a qualsevol idioma.",
+		"Hola! Fes servir els meus serveis per traduir els teus missatges a qualsevol idioma!"},
+	"my": {"မင်္ဂလာပါ! ကျွန်တော် သင့်မက်ဆေ့ကို ဘာသာစကားမဆို ပြန်ဆိုပေးနိုင်ပါတယ်။",
+		"မင်္ဂလာပါ! ကျွန်တော် ဒီနေရာမှာ သင့်မက်ဆေ့ကို ဘာသာစကားမဆို ပြန်ဆိုပေးဖို့အတွက်ရှိပါတယ်။",
+		"မင်္ဂလာပါ! သင့်မက်ဆေ့ကို ဘာသာစကားမဆို ပြန်ဆိုဖို့ ကျွန်တော်ကို အသုံးပြုပါ!"},
 }
 
 var instructions = map[string][]string{
@@ -284,6 +299,15 @@ var instructions = map[string][]string{
 	"af": {"Gebruik asseblief die opdrag om jou boodskap te vertaal.",
 		"Gebruik die opdrag om jou boodskap te vertaal, asseblief.",
 		"Gebruik asseblief die opdrag om jou boodskap te vertaal, dankie!"},
+	"az": {"Mesajınızı tərcümə etmək üçün əmrdən istifadə edin.",
+		"Zəhmət olmasa, mesajınızı tərcümə etmək üçün əmrdən istifadə edin.",
+		"Mesajınızı tərcümə etmək üçün əmrdən istifadə edin, təşəkkürlər!"},
+	"km": {"សូមប្រើបញ្ជាការដើម្បីបកប្រែសាររបស់អ្នក។",
+		"សូមប្រើបញ្ជាការដើម្បីបកប្រែសាររបស់អ្នក, សូមអរគុណ។",
+		"សូមប្រើបញ្ជាការដើម្បីបកប្រែសាររបស់អ្នក។ សូមអរគុណ!"},
+	"my": {"ကျေးဇူးပြု၍ သင့်မက်ဆေ့ကို ဘာသာပြန်ရန် ကမန်အမိန့်ကို အသုံးပြုပါ။",
+		"ကျေးဇူးပြု၍ သင့်မက်ဆေ့ကို ဘာသာပြန်ရန် ကမန်အမိန့်ကို အသုံးပြုပါ။ ကျေးဇူးတင်ပါတယ်။",
+		"ကျေးဇူးပြု၍ သင့်မက်ဆေ့ကို ဘာသာပြန်ရန် ကမန်အမိန့်ကို အသုံးပြုပါ၊ ကျေးဇူးတင်ပါတယ်!"},
 }
 
 func getParentLanguage(locale string) string {
@@ -298,7 +322,7 @@ func GetRandomGreeting(locale string) string {
 	locale = getParentLanguage(locale)
 	greeting := helloMessages[locale]
 	if len(greeting) == 0 {
-		println(locale + " is not supported, defaulting to 'en' locale")
+		println(locale + " greeting is not supported, defaulting to 'en' locale")
 		greeting = helloMessages["en"]
 	}
 	return greeting[rand.Intn(len(greeting))]
@@ -310,6 +334,7 @@ func GetRandomInstruction(locale string) string {
 	}
 	instruction := instructions[locale]
 	if len(instruction) == 0 {
+		println(locale + " instruction is not supported, defaulting to 'en' locale")
 		instruction = instructions["en"]
 	}
 	return instruction[rand.Intn(len(instruction))]
