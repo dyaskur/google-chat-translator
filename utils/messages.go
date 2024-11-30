@@ -310,6 +310,58 @@ var instructions = map[string][]string{
 		"ကျေးဇူးပြု၍ သင့်မက်ဆေ့ကို ဘာသာပြန်ရန် ကမန်အမိန့်ကို အသုံးပြုပါ၊ ကျေးဇူးတင်ပါတယ်!"},
 }
 
+var exampleCommands = map[string][]string{
+	"en": {"/spanish Hi, when is our next meeting?", "/spanish Hi, can anyone suggest a topic?", "/spanish Hi, everyone, I am new here. I can't speak Spanish?"},
+	"id": {"/english Halo, ada yang mau mengajukan pertemuan selanjutnya?", "/english Hai, maaf aku tidak bisa bahasa ingris?", "/spanish Halo semua, saya masih baru disini, bisa mohon bantuanya ya?"},
+	"ms": {"/english Hai, bila mesyuarat kita yang seterusnya?", "/english Hai, ada sesiapa boleh cadangkan topik?", "/english Hai semua, saya baru di sini. Saya tak boleh bercakap bahasa Inggeris."},
+	"az": {"/english Salam, bizim növbəti görüşümüz nə vaxtdır?", "/english Salam, kim mövzu təklif edə bilər?", "/english Salam, hər kəs, mən buradayam. İngilis dilində danışa bilmirəm."},
+	"km": {"/english សួស្តី, ការជួបរបស់យើងនៅពេលណា?", "/english សួស្តី, តើមានអ្នកណាអាចផ្តល់យោបល់អំពីប្រធានបទទេ?", "/english សួស្តីអស់អ្នកទាំងអស់គ្នា, ខ្ញុំថ្មីនៅទីនេះ។ ខ្ញុំមិនអាចនិយាយភាសាអង់គ្លេសបាន។"},
+	"ca": {"/english Hola, quan és la nostra pròxima reunió?", "/english Hola, algú pot suggerir un tema?", "/english Hola a tothom, sóc nou aquí. No puc parlar anglès."},
+	"my": {"/english ဟိုင်း၊ ကျွန်ုပ်တို့ရဲ့ နောက်ဆုံးအစည်းအဝေး ဘယ်တော့လဲ?", "/english ဟိုင်း၊ ဘယ်သူမဆို ခေါင်းစဉ် တစ်ခု ရေးမလား။", "/english ဟိုင်းအားလုံး၊ ကျွန်တော် ဒီမှာ အသစ်ပါ။ အင်္ဂလိပ်လို မပြောတတ်ဘူး။"},
+	"sw": {"/english Hujambo, mkutano wetu ujao ni lini?", "/english Hujambo, je kuna mtu anaweza kupendekeza mada?", "/english Hujambo kila mtu, mimi ni mgeni hapa. Siwezi kuzungumza Kiingereza."},
+	"zu": {"/english Sawubona, umhlangano wethu olandelayo uzoba nini?", "/english Sawubona, ngabe kukhona ongaphakamisa isihloko?", "/english Sawubona nonke, ngiyasha lapha. Angikwazi ukukhuluma isiNgisi."},
+	"tl": {"/english Kamusta, kailan ang susunod nating pagpupulong?", "/english Kamusta, may makakapagsuggest ba ng topic?", "/english Kamusta lahat, baguhan lang ako dito. Hindi ako marunong mag-English."},
+	"hi": {"/english नमस्ते, हमारी अगली बैठक कब है?", "/english नमस्ते, क्या कोई विषय सुझा सकता है?", "/english नमस्ते सभी, मैं यहाँ नया हूँ। मैं अंग्रेजी नहीं बोल सकता।"},
+	"af": {"/english Hallo, wanneer is ons volgende vergadering?", "/english Hallo, kan iemand 'n onderwerp voorstel?", "/english Hallo almal, ek is nuut hier. Ek kan nie Engels praat nie."},
+	"fr": {"/english Bonjour, quand est notre prochaine réunion ?", "/english Bonjour, quelqu'un peut-il suggérer un sujet ?", "/english Bonjour tout le monde, je suis nouveau ici. Je ne parle pas anglais."},
+	"de": {"/english Hallo, wann ist unser nächstes Treffen?", "/english Hallo, kann jemand ein Thema vorschlagen?", "/english Hallo zusammen, ich bin neu hier. Ich spreche kein Englisch."},
+	"it": {"/english Ciao, quando è il nostro prossimo incontro?", "/english Ciao, qualcuno può suggerire un argomento?", "/english Ciao a tutti, sono nuovo qui. Non parlo inglese."},
+	"pt": {"/english Oi, quando é nossa próxima reunião?", "/english Oi, alguém pode sugerir um tópico?", "/english Oi, pessoal, sou novo aqui. Não sei falar inglês."},
+	"ru": {"/english Привет, когда наша следующая встреча?", "/english Привет, кто-нибудь может предложить тему?", "/english Привет всем, я здесь новичок. Я не говорю по-английски."},
+	"zh": {"/english 你好，我们的下一次会议是什么时候？", "/english 你好，有人可以建议一个主题吗？", "/english 大家好，我是这里的新手。我不会说英语。"},
+	"ja": {"/english こんにちは、次の会議はいつですか？", "/english こんにちは、誰かトピックを提案できますか？", "/english みなさん、こんにちは、私はここで新しいです。英語が話せません。"},
+	"ko": {"/english 안녕하세요, 다음 회의는 언제인가요?", "/english 안녕하세요, 누가 주제를 제안할 수 있나요?", "/english 안녕하세요 여러분, 저는 여기 새로 왔습니다. 영어를 못합니다."},
+	"ar": {"/english مرحبًا، متى اجتماعنا القادم؟", "/english مرحبًا، هل يمكن لأحد اقتراح موضوع؟", "/english مرحبًا بالجميع، أنا جديد هنا. لا أتكلم الإنجليزية."},
+	"tr": {"/english Merhaba, bir sonraki toplantımız ne zaman?", "/english Merhaba, bir konu önerebilir misiniz?", "/english Herkese merhaba, buradayım. İngilizce konuşamıyorum."},
+	"nl": {"/english Hallo, wanneer is onze volgende vergadering?", "/english Hallo, kan iemand een onderwerp voorstellen?", "/english Hallo allemaal, ik ben nieuw hier. Ik spreek geen Engels."},
+	"sv": {"/english Hej, när är vårt nästa möte?", "/english Hej, kan någon föreslå ett ämne?", "/english Hej allihopa, jag är ny här. Jag kan inte prata engelska."},
+	"pl": {"/english Cześć, kiedy jest nasze następne spotkanie?", "/english Cześć, czy ktoś może zaproponować temat?", "/english Cześć wszystkim, jestem tu nowy. Nie mówię po angielsku."},
+	"el": {"/english Γεια, πότε είναι η επόμενη συνάντησή μας;", "/english Γεια, μπορεί κάποιος να προτείνει ένα θέμα;", "/english Γεια σε όλους, είμαι νέος εδώ. Δεν μιλάω αγγλικά."},
+	"th": {"/english สวัสดีค่ะ/ครับ การประชุมครั้งหน้าของเราคือเมื่อไหร่?", "/english สวัสดีค่ะ/ครับ มีใครแนะนำหัวข้อได้บ้าง?", "/english สวัสดีทุกคน ฉันเป็นสมาชิกใหม่ที่นี่ ฉันพูดภาษาอังกฤษไม่ได้ค่ะ/ครับ"},
+	"vi": {"/english Chào, khi nào chúng ta sẽ họp lần tiếp theo?", "/english Chào, có ai gợi ý chủ đề nào không?", "/english Chào mọi người, tôi là người mới ở đây. Tôi không nói được tiếng Anh."},
+	"uk": {"/english Привіт, коли наша наступна зустріч?", "/english Привіт, чи може хтось запропонувати тему?", "/english Привіт усім, я тут новачок. Я не розмовляю англійською."},
+	"hu": {"/english Szia, mikor lesz a következő találkozónk?", "/english Szia, javasolhat valaki egy témát?", "/english Sziasztok, új vagyok itt. Nem beszélek angolul."},
+	"cs": {"/english Ahoj, kdy máme další schůzku?", "/english Ahoj, může někdo navrhnout téma?", "/english Ahoj všichni, jsem tu nový. Nemluvím anglicky."},
+	"ro": {"/english Bună, când este următoarea noastră întâlnire?", "/english Bună, poate cineva să sugereze un subiect?", "/english Bună tuturor, sunt nou aici. Nu vorbesc engleză."},
+	"he": {"/english שלום, מתי הפגישה הבאה שלנו?", "/english שלום, מישהו יכול להציע נושא?", "/english שלום לכולם, אני חדש כאן. אני לא מדבר אנגלית."},
+	"bg": {"/english Здравей, кога е следващата ни среща?", "/english Здравей, може ли някой да предложи тема?", "/english Здравейте всички, аз съм нов тук. Не говоря английски."},
+	"fa": {"/english سلام، جلسه بعدی ما کی هست؟", "/english سلام، کسی می‌تواند موضوعی پیشنهاد دهد؟", "/english سلام به همه، من اینجا تازه‌وارد هستم. من نمی‌توانم انگلیسی صحبت کنم."},
+	"ur": {"/english سلام، ہماری اگلی ملاقات کب ہوگی؟", "/english سلام، کیا کوئی موضوع تجویز کر سکتا ہے؟", "/english سب کو سلام، میں یہاں نیا ہوں۔ میں انگریزی نہیں بول سکتا۔"},
+	"sr": {"/english Здраво, када је наш следећи састанак?", "/english Здраво, може ли неко предложити тему?", "/english Здраво свима, ја сам нов овде. Не говорим енглески."},
+	"sk": {"/english Ahoj, kedy je naše ďalšie stretnutie?", "/english Ahoj, môže niekto navrhnúť tému?", "/english Ahojte všetci, som tu nový. Nehovorím po anglicky."},
+	"lt": {"/english Sveiki, kada yra mūsų kitas susitikimas?", "/english Sveiki, ar kas nors gali pasiūlyti temą?", "/english Sveiki visi, esu čia naujokas. Nemoku angliškai."},
+	"lv": {"/english Sveiki, kad ir nākamā tikšanās?", "/english Sveiki, vai kāds varētu ieteikt tēmu?", "/english Sveiki visiem, esmu šeit jauniņais. Es nerunāju angliski."},
+	"hr": {"/english Bok, kada je naš sljedeći sastanak?", "/english Bok, može li netko predložiti temu?", "/english Bok svima, ja sam nov ovdje. Ne govorim engleski."},
+	"da": {"/english Hej, hvornår er vores næste møde?", "/english Hej, kan nogen foreslå et emne?", "/english Hej alle sammen, jeg er ny her. Jeg taler ikke engelsk."},
+	"fi": {"/english Hei, milloin on seuraava tapaamisemme?", "/english Hei, voiko joku ehdottaa aihetta?", "/english Hei kaikki, olen uusi täällä. En puhu englantia."},
+	"no": {"/english Hei, når er vårt neste møte?", "/english Hei, kan noen foreslå et tema?", "/english Hei alle sammen, jeg er ny her. Jeg snakker ikke engelsk."},
+	"bn": {"/english হ্যালো, আমাদের পরবর্তী মিটিং কখন?", "/english হ্যালো, কেউ কি একটি বিষয় প্রস্তাব করতে পারেন?", "/english হ্যালো সবাই, আমি এখানে নতুন। আমি ইংরেজি বলতে পারি না।"},
+	"ta": {"/english வணக்கம், எப்போது அடுத்த கூட்டம்?", "/english வணக்கம், யாராவது ஒரு தலைப்பை பரிந்துரை செய்ய முடியுமா?", "/english வணக்கம் அனைவருக்கும், நான் இங்கே புதியவன். நான் ஆங்கிலம் பேச முடியவில்லை."},
+	"te": {"/english హలో, మన తదుపరి సమావేశం ఎప్పుడు?", "/english హలో, ఎవరికైనా అంశం ప్రతిపాదించగలరా?", "/english హలో అందరికీ, నేను ఇక్కడ కొత్తవాడిని. నాకు ఆంగ్లం మాట్లాడటం రాదు."},
+	"ml": {"/english ഹലോ, നമ്മുടെ അടുത്ത യോഗം എപ്പോഴാണ്?", "/english ഹലോ, ആരെങ്കിലും ഒരു വിഷയം നിർദ്ദേശിക്കാമോ?", "/english എല്ലാവർക്കും ഹലോ, ഞാൻ ഇവിടെ പുതിയ ആളാണ്. എനിക്ക് ഇംഗ്ലീഷ് സംസാരിക്കാൻ സാധിക്കില്ല."},
+	"am": {"/english ሰላም፣ ቀጣይ ስብሰባችን መቼ ነው?", "/english ሰላም፣ ማንም ርዕስ መነሻ ሊያቀርብ ይችላል?", "/english ሰላም ሁላችሁም፣ እኔ አዲስ ነኝ። እንግሊዝኛ መናገር አልቻልኩም።"},
+}
+
 func getParentLanguage(locale string) string {
 	localeSlice := strings.Split(locale, "-")
 	return localeSlice[0]
@@ -338,4 +390,16 @@ func GetRandomInstruction(locale string) string {
 		instruction = instructions["en"]
 	}
 	return instruction[rand.Intn(len(instruction))]
+}
+
+func GetRandomExampleCommand(locale string) string {
+	if locale == "" {
+		locale = "en"
+	}
+	exampleCommand := exampleCommands[locale]
+	if len(exampleCommand) == 0 {
+		println(locale + " command is not supported, defaulting to 'en' locale")
+		exampleCommand = exampleCommands["en"]
+	}
+	return exampleCommand[rand.Intn(len(exampleCommand))]
 }

@@ -55,13 +55,14 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			greeting := utils.GetRandomGreeting(locale)
 			instruction := utils.GetRandomInstruction(locale)
+			exampleCommand := utils.GetRandomExampleCommand(locale)
 			reply = chat.Message{
 				ActionResponse: &chat.ActionResponse{
 					Type: "NEW_MESSAGE",
 				},
 				Text: greeting + "\n" + instruction +
 					"\ne.g: \n" +
-					"`/spanish Hello everyone`\n" +
+					"`" + exampleCommand + "`\n" +
 					"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
 					"`/japanese ¡Vamos a empezar!`\n" +
 					"`/russian Buenos dias`\n" +

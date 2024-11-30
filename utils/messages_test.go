@@ -132,3 +132,43 @@ func TestGetParentLanguageWithEmptyString(t *testing.T) {
 		t.Errorf("Expected empty string, got '%s'", result)
 	}
 }
+
+// Returns random example command from exampleCommands map for valid locale
+func TestGetRandomExampleCommandForValidLocale(t *testing.T) {
+	locale := "fr"
+	expectedCommands := exampleCommands[locale]
+
+	command := GetRandomExampleCommand(locale)
+
+	found := false
+	for _, expectedCmd := range expectedCommands {
+		if command == expectedCmd {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("Got command %s which is not in expected commands for locale %s", command, locale)
+	}
+}
+
+// Handles unsupported/non-existent locale by defaulting to 'en'
+func TestGetRandomExampleCommandForUnsupportedLocale(t *testing.T) {
+	locale := "unsupported"
+	expectedCommands := exampleCommands["en"]
+
+	command := GetRandomExampleCommand(locale)
+
+	found := false
+	for _, expectedCmd := range expectedCommands {
+		if command == expectedCmd {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("Got command %s which is not in expected English commands for unsupported locale", command)
+	}
+}
