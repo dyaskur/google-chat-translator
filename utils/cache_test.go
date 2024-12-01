@@ -7,6 +7,9 @@ import (
 )
 
 func TestGetCacheExistingKey(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	key := "existingKey"
 	expectedValue := "value"
 
