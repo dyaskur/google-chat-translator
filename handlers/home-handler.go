@@ -10,6 +10,7 @@ import (
 	"yaskur.com/chat-translator/cards"
 	"yaskur.com/chat-translator/translators"
 	"yaskur.com/chat-translator/types"
+	"yaskur.com/chat-translator/utils"
 )
 
 type Navigation struct {
@@ -96,7 +97,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 				errorMessage = fmt.Sprint(err)
 			} else {
 				configJson, _ := json.Marshal(formInput)
-				translators.SetCache(configKey, string(configJson))
+				utils.SetCache(configKey, string(configJson))
 			}
 		}
 		formInput.Result = translatedText
@@ -106,7 +107,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			}},
 		}}
 	} else {
-		lastInputJson, _ := translators.GetCache(configKey)
+		lastInputJson, _ := utils.GetCache(configKey)
 		if lastInputJson != "" {
 			err := json.Unmarshal([]byte(lastInputJson), &formInput)
 			if err != nil {
