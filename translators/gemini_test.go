@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestStraicoTranslate(t *testing.T) {
-	result, sourceLanguage, err := straicoTranslate("en", "kowe ki sopo to jane, aku lo wong bagus", "")
+func TestTranslate(t *testing.T) {
+	result, sourceLanguage, err := geminiTranslate("en", "kowe ki sopo to jane, aku lo wong bagus", "")
 
 	if err != nil {
 		t.Errorf("error: %s", err.Error())
@@ -15,7 +15,7 @@ func TestStraicoTranslate(t *testing.T) {
 		t.Errorf("result is empty")
 	}
 
-	if sourceLanguage != "jw" {
+	if sourceLanguage != "jw" && sourceLanguage != "jv" {
 		t.Errorf("sourceLanguage: %s", sourceLanguage)
 	}
 }

@@ -2,11 +2,13 @@ PROJECT_ID="app-name"
 PROJECT_REGION="asia-southeast1"
 FUNCTION_NAME="go-function"
 REDIS_URI="rediss://default:bla@redishost:6379"
+STRAICO_API_KEY=""
+GEMINI_API_KEY=""
 gcloud config set project $PROJECT_ID
 
 gcloud functions deploy $FUNCTION_NAME \
   --gen2 \
-  --runtime=go121 \
+  --runtime=go123 \
   --region=$PROJECT_REGION \
   --set-env-vars REDIS_URI=$REDIS_URI \
   --source=. \
