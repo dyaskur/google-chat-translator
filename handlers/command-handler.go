@@ -87,7 +87,6 @@ func CommandHandler(event types.ChatEvent) chat.Message {
 
 	targetLanguage := utils.GetById(commandId)
 	log.Printf("targetLanguage: %s", targetLanguage.Code)
-	translatedText, source, err := utils.TranslateText(targetLanguage.Code, message.ArgumentText, "")
 	translatedText, source, err := translators.TranslateText(targetLanguage.Code, message.ArgumentText, "")
 	if err != nil {
 		log.Fatal(err)
