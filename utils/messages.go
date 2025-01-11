@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"math/rand"
 	"strings"
 )
@@ -380,26 +381,29 @@ func GetRandomGreeting(locale string) string {
 	return greeting[rand.Intn(len(greeting))]
 }
 
-func GetRandomInstruction(locale string) string {
-	if locale == "" {
-		locale = "en"
+// FetchRandomElement retrieves a random element from a localized map.
+// If the locale is not supported, it falls back to the default "en" locale.
+func fetchRandomElement(data map[string][]string, locale string, dataType string) string {
+	mainLocale := "en"
+	if locale != "" {
+		mainLocale = strings.Split(locale, "-")[0]
 	}
-	instruction := instructions[locale]
-	if len(instruction) == 0 {
-		println(locale + " instruction is not supported, defaulting to 'en' locale")
-		instruction = instructions["en"]
+
+	elements := data[mainLocale]
+	if len(elements) == 0 {
+		log.Printf("%s locale is not supported for %s, defaulting to 'en'", locale, dataType)
+		elements = data["en"]
 	}
-	return instruction[rand.Intn(len(instruction))]
+
+	return elements[rand.Intn(len(elements))]
 }
 
+// GetRandomInstruction retrieves a random instruction based on the locale.
+func GetRandomInstruction(locale string) string {
+	return fetchRandomElement(instructions, locale, "instructions")
+}
+
+// GetRandomExampleCommand retrieves a random example command based on the locale.
 func GetRandomExampleCommand(locale string) string {
-	if locale == "" {
-		locale = "en"
-	}
-	exampleCommand := exampleCommands[locale]
-	if len(exampleCommand) == 0 {
-		println(locale + " command is not supported, defaulting to 'en' locale")
-		exampleCommand = exampleCommands["en"]
-	}
-	return exampleCommand[rand.Intn(len(exampleCommand))]
+	return fetchRandomElement(exampleCommands, locale, "example commands")
 }
