@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"yaskur.com/chat-translator/cards"
+	"yaskur.com/chat-translator/translators"
 	"yaskur.com/chat-translator/types"
 	"yaskur.com/chat-translator/utils"
 )
@@ -61,6 +62,7 @@ func CommandHandler(event types.ChatEvent) chat.Message {
 		return reply
 	} else if commandId == 3 {
 		// commandId 1 = /translate
+		// commandId 3 = /translate
 
 		var formInput types.FormInput
 		lastInputJson, _ := utils.GetCache(configKey)
@@ -86,6 +88,7 @@ func CommandHandler(event types.ChatEvent) chat.Message {
 	targetLanguage := utils.GetById(commandId)
 	log.Printf("targetLanguage: %s", targetLanguage.Code)
 	translatedText, source, err := utils.TranslateText(targetLanguage.Code, message.ArgumentText, "")
+	translatedText, source, err := translators.TranslateText(targetLanguage.Code, message.ArgumentText, "")
 	if err != nil {
 		log.Fatal(err)
 	}

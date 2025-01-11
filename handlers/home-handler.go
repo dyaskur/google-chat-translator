@@ -3,12 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"google.golang.org/api/chat/v1"
 	"log"
 	"net/http"
+
+	"google.golang.org/api/chat/v1"
 	"yaskur.com/chat-translator/cards"
+	"yaskur.com/chat-translator/translators"
 	"yaskur.com/chat-translator/types"
-	"yaskur.com/chat-translator/utils"
 )
 
 type Navigation struct {
@@ -89,13 +90,13 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("invalid validation: %v", err)
 			errorMessage = fmt.Sprint(err)
 		} else {
-			translatedText, source, err = utils.TranslateText(formInput.Target, formInput.Text, formInput.Source)
+			translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
 			if err != nil {
 				log.Printf("error translate: %v", err)
 				errorMessage = fmt.Sprint(err)
 			} else {
 				configJson, _ := json.Marshal(formInput)
-				utils.SetCache(configKey, string(configJson))
+				translators.SetCache(configKey, string(configJson))
 			}
 		}
 		formInput.Result = translatedText
@@ -105,7 +106,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			}},
 		}}
 	} else {
-		lastInputJson, _ := utils.GetCache(configKey)
+		lastInputJson, _ := translators.GetCache(configKey)
 		if lastInputJson != "" {
 			err := json.Unmarshal([]byte(lastInputJson), &formInput)
 			if err != nil {

@@ -3,10 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"google.golang.org/api/chat/v1"
 	"log"
 	"strconv"
+
+	"google.golang.org/api/chat/v1"
 	"yaskur.com/chat-translator/cards"
+	"yaskur.com/chat-translator/translators"
 	"yaskur.com/chat-translator/types"
 	"yaskur.com/chat-translator/utils"
 )
@@ -45,7 +47,7 @@ func ActionHandler(event types.ChatEvent) chat.Message {
 			log.Printf("invalid validation: %v", err)
 			errorMessage = fmt.Sprint(err)
 		} else {
-			translatedText, source, err = utils.TranslateText(formInput.Target, formInput.Text, formInput.Source)
+			translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
 			if err != nil {
 				log.Printf("error translate: %v", err)
 				errorMessage = fmt.Sprint(err)
