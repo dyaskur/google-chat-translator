@@ -2,3 +2,4 @@
 dist/*
 .env.yaml
 deploy.sh
+.DS_Store
