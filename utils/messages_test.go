@@ -67,7 +67,7 @@ func TestGetRandomInstructionReturnsValidMessage(t *testing.T) {
 	locale := "fr"
 	expectedMessages := []string{
 		"Veuillez utiliser la commande pour traduire votre message.",
-		"Utilisez la commande pour traduire votre message, s'il vous plaￃﾮt.",
+		"Utilisez la commande pour traduire votre message, s'il vous plaît.",
 		"Utilisez la commande pour traduire votre message, merci !",
 	}
 
@@ -80,7 +80,6 @@ func TestGetRandomInstructionReturnsValidMessage(t *testing.T) {
 			break
 		}
 	}
-
 	if !found {
 		t.Errorf("GetRandomInstruction(%s) = %s; want one of %v", locale, result, expectedMessages)
 	}
