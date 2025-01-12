@@ -5,6 +5,10 @@ import (
 )
 
 func TestTranslate(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	result, sourceLanguage, err := geminiTranslate("en", "kowe ki sopo to jane, aku lo wong bagus", "")
 
 	if err != nil {
