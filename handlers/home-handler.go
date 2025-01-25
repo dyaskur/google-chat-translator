@@ -17,12 +17,15 @@ type Navigation struct {
 	PushCard   *chat.GoogleAppsCardV1Card `json:"push_card,omitempty"`
 	UpdateCard *chat.GoogleAppsCardV1Card `json:"update_card,omitempty"`
 }
+
 type Action struct {
 	Navigation []Navigation `json:"navigations"`
 }
+
 type RenderAction struct {
 	Action Action `json:"action"`
 }
+
 type ActionResponse struct {
 	RenderAction RenderAction `json:"render_actions"`
 }
@@ -30,23 +33,25 @@ type ActionResponse struct {
 type AuthorizationEventObject struct {
 	UserOAuthToken string `json:"userOAuthToken,omitempty"`
 }
+
 type Chat struct {
 	Type  string     `json:"type,omitempty"`
 	User  chat.User  `json:"user,omitempty"`
 	Space chat.Space `json:"space,omitempty"`
 }
+
 type ChatRequest struct {
 	CommonEventObject        chat.CommonEventObject   `json:"commonEventObject,omitempty"`
 	AuthorizationEventObject AuthorizationEventObject `json:"authorizationEventObject,omitempty"`
 	Chat                     Chat                     `json:"chat,omitempty"`
 }
 
-func getFormInput(event chat.CommonEventObject) types.FormInput {
+func extractFormInput(event chat.CommonEventObject) types.FormInput {
 	getValue := func(key string) string {
 		if inputs, exists := event.FormInputs[key]; exists && len(inputs.StringInputs.Value) > 0 {
 			return inputs.StringInputs.Value[0]
 		}
-		return "" // Default value
+		return ""
 	}
 
 	return types.FormInput{
@@ -65,70 +70,81 @@ func validateFormInput(input types.FormInput) error {
 	return err
 }
 
+func handleSubmitForm(event ChatRequest, configKey string) RenderAction {
+	formInput := extractFormInput(event.CommonEventObject)
+	var errorMessage string
+	var translatedText, source string
+	err := validateFormInput(formInput)
+	if err == nil {
+		var err error
+		translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
+		if err != nil {
+			log.Printf("Translation error: %v", err)
+			errorMessage = err.Error()
+		} else {
+			if configJson, err := json.Marshal(formInput); err == nil {
+				utils.SetCache(configKey, string(configJson))
+			}
+		}
+	} else {
+		errorMessage = err.Error()
+	}
+	log.Printf("Translation result: %v from %v to %v with %v", translatedText, formInput.Target, formInput.Source, formInput.Text)
+	formInput.Result = translatedText
+	return RenderAction{
+		Action: Action{
+			Navigation: []Navigation{{
+				UpdateCard: cards.TranslateForm(formInput, source, errorMessage).Card,
+			}},
+		},
+	}
+}
+
+func handleInitialLoad(configKey string) RenderAction {
+	var formInput types.FormInput
+	if lastInputJson, err := utils.GetCache(configKey); err == nil && lastInputJson != "" {
+		if err := json.Unmarshal([]byte(lastInputJson), &formInput); err != nil {
+			log.Printf("Error unmarshaling cached input: %v", err)
+		}
+	}
+
+	return RenderAction{
+		Action: Action{
+			Navigation: []Navigation{{
+				PushCard: cards.TranslateForm(formInput, "", "").Card,
+			}},
+		},
+	}
+}
+
 // HomeHandler handles the HTTP request and returns a JSON response.
 // It decodes the request body into a ChatRequest struct, validates the form input,
 // translates the text, and returns the appropriate response
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	// Decode the request body into a ChatRequest struct
 	var event ChatRequest
-	err := json.NewDecoder(r.Body).Decode(&event)
-	if err != nil {
-		log.Fatal(err)
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		log.Printf("Error decoding request: %v", err)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-	log.Printf(event.Chat.Type)
-	log.Printf("%#v", event)
-	var formInput types.FormInput
+
+	configKey := fmt.Sprintf("home_%s", event.Chat.User.Name)
 	var result RenderAction
-	var errorMessage string
-	var translatedText string
-	var source string
-	configKey := "home_" + event.Chat.User.Name
+
 	if event.Chat.Type == "SUBMIT_FORM" {
-		formInput = getFormInput(event.CommonEventObject)
-		err := validateFormInput(formInput)
-		if err != nil {
-			log.Printf("invalid validation: %v", err)
-			errorMessage = fmt.Sprint(err)
-		} else {
-			translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
-			if err != nil {
-				log.Printf("error translate: %v", err)
-				errorMessage = fmt.Sprint(err)
-			} else {
-				configJson, _ := json.Marshal(formInput)
-				utils.SetCache(configKey, string(configJson))
-			}
-		}
-		formInput.Result = translatedText
-		result = RenderAction{Action: Action{
-			Navigation: []Navigation{{
-				UpdateCard: cards.TranslateForm(formInput, source, errorMessage).Card,
-			}},
-		}}
+		result = handleSubmitForm(event, configKey)
 	} else {
-		lastInputJson, _ := utils.GetCache(configKey)
-		if lastInputJson != "" {
-			err := json.Unmarshal([]byte(lastInputJson), &formInput)
-			if err != nil {
-				panic(err)
-			}
-		}
-		result = RenderAction{Action: Action{
-			Navigation: []Navigation{{
-				PushCard: cards.TranslateForm(formInput, "", errorMessage).Card,
-			}},
-		}}
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if event.Chat.Type == "SUBMIT_FORM" {
-		err = json.NewEncoder(w).Encode(ActionResponse{RenderAction: result})
-	} else {
-		err = json.NewEncoder(w).Encode(result)
+		result = handleInitialLoad(configKey)
 	}
 
-	if err != nil {
-		log.Fatal(err)
+	w.Header().Set("Content-Type", "application/json")
+	var response interface{} = result
+	if event.Chat.Type == "SUBMIT_FORM" {
+		response = ActionResponse{RenderAction: result}
 	}
-	return
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }

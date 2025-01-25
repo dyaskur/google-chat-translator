@@ -59,7 +59,7 @@ func handleTranslate(event types.ChatEvent) chat.Message {
 	var errorMessage string
 	var translatedText string
 	var source string
-	formInput = getFormInput(*event.Common)
+	formInput = extractFormInput(*event.Common)
 	err := validateFormInput(formInput)
 	if err != nil {
 		log.Printf("invalid validation: %v", err)
