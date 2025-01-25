@@ -62,8 +62,8 @@ https://cloud.google.com/translate/docs/languages#adaptive_translation
 | 68      | Kazakh                        | kk           | Translate into Kazakh language (KK:Қазақ тілі) 🇰🇿                  | /kazakh                  |
 | 69      | Khmer                         | km           | Translate into Khmer language (KM:ខ្មែរ) 🇰🇭                         | /khmer                   |
 | 70      | Kinyarwanda                   | rw           | Translate into Kinyarwanda language (RW:Ikinyarwanda) 🇷🇼           | /kinyarwanda, /rwanda    |
-| 71,225  | Konkani                       | gom          | Translate into Konkani language (GOM:कोंकणी) 🇮🇳                     | /konkani                 |
-| 72      | Korean                        | ko           | Translate into Korean language (KO:한국어) 🇰🇷                      | /korean                  |
+| 72,225  | Konkani                       | gom          | Translate into Konkani language (GOM:कोंकणी) 🇮🇳                     | /konkani                 |
+| 71      | Korean                        | ko           | Translate into Korean language (KO:한국어) 🇰🇷                      | /korean                  |
 | 73      | Krio                          | kri          | Translate into Krio language (KRI:Krio) 🇸🇱                         | /krio                    |
 | 74      | Kurdish                       | ku           | Translate into Kurdish language (KU:Kurdî) 🇹🇷🇮🇶🇮🇷🇸🇾                | /kurdish                 |
 | 75      | Kurdish (Sorani)              | ckb          | Translate into Kurdish (Sorani) language (CKB:کوردیی ناوەندی) 🇮🇶   | /kurdish_sorani          |
