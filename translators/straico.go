@@ -8,91 +8,128 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
-func straicoTranslate(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
-	url := "https://api.straico.com/v0/prompt/completion"
-	method := "POST"
+const (
+	straicoAPIURL = "https://api.straico.com/v0/prompt/completion"
+	straicoModel  = "openai/gpt-4o-mini"
+	timeout       = 10 * time.Second
+)
+
+type straicoRequest struct {
+	Model   string `json:"model"`
+	Message string `json:"message"`
+}
+
+type straicoResponse struct {
+	Data struct {
+		Completion struct {
+			Choices []struct {
+				Message struct {
+					Content string `json:"content"`
+				} `json:"message"`
+			} `json:"choices"`
+		} `json:"completion"`
+	} `json:"data"`
+}
+
+func buildTranslationCommand(targetLanguage, sourceLanguage string) string {
 	command := "Translate this sentence"
-	if sourceLanguage != "" {
-		command = command + " from " + sourceLanguage
+	if sourceLanguage != "" && sourceLanguage != "auto" {
+		command += " from " + sourceLanguage
 	} else {
-		command = command + " detect the source language code with format language_code|||translated_text."
+		command += " detect the source language code with format language_code|||translated_text"
 	}
-	command = command + " to " + targetLanguage
+	return command + " to " + targetLanguage
+}
 
-	// JSON payload as a raw string
-	payload := `{
-		"model": "openai/gpt-4o-mini",
-		"message": "Respond concisely without any introductory or closing remarks, additional comments, or greetings.` + command + ` : '` + text + `'"
-	}`
+func getStraicoAPIKey() (string, error) {
+	apiKey, exists := os.LookupEnv("STRAICO_API_KEY")
+	if !exists {
+		return "", fmt.Errorf("STRAICO_API_KEY environment variable not found")
+	}
+	return apiKey, nil
+}
 
-	// Convert the payload to a byte buffer
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(payload)))
+func makeStraicoRequest(payload *straicoRequest) (*straicoResponse, error) {
+	apiKey, err := getStraicoAPIKey()
 	if err != nil {
-		fmt.Printf("Error creating request: %v\n", err)
-		return "", "", err
+		return nil, err
 	}
-	apiKey, ok := os.LookupEnv("STRAICO_API_KEY")
-	if !ok {
-		return "", "", fmt.Errorf("STRAICO_API_KEY not found")
-	}
-	// Set headers
-	req.Header.Add("Authorization", "Bearer "+apiKey)
-	req.Header.Add("Content-Type", "application/json")
 
-	// Execute the request
-	res, err := client.Do(req)
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Printf("Error making request: %v\n", err)
-		return "", "", err
+		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
-	defer res.Body.Close()
 
-	// Read the response body
-	body, err := io.ReadAll(res.Body)
+	client := &http.Client{Timeout: timeout}
+	req, err := http.NewRequest(http.MethodPost, straicoAPIURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Printf("Error reading response: %v\n", err)
-		return "", "", err
+		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	// fmt.Println("Response:")
-	// fmt.Println(string(body))
-	//convert to struct
-	// Parse the JSON response
-	var response map[string]interface{}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("unexpected status code: %d req: %s", resp.StatusCode, jsonData)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var response straicoResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		fmt.Printf("Error parsing JSON: %v\n", err)
+		fmt.Printf("Error parsing JSON: err:%v\n res:%s\n req:%s\n", err, body, jsonData)
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return &response, nil
+}
+
+func parseTranslationResponse(content, sourceLanguage string) (string, string, error) {
+	if sourceLanguage != "" {
+		return content, sourceLanguage, nil
+	}
+
+	parts := strings.Split(content, "|||")
+	if len(parts) <= 1 {
+		return "", "", fmt.Errorf("invalid response format: expected language_code|||translated_text")
+	}
+
+	return strings.TrimSpace(parts[1]), strings.TrimSpace(parts[0]), nil
+}
+
+func straicoTranslate(targetLanguage, text, sourceLanguage string) (string, string, error) {
+	command := buildTranslationCommand(targetLanguage, sourceLanguage)
+
+	payload := &straicoRequest{
+		Model:   straicoModel,
+		Message: fmt.Sprintf("Respond concisely without any introductory or closing remarks, additional comments, or greetings.%s : '%s'", command, text),
+	}
+
+	response, err := makeStraicoRequest(payload)
+	if err != nil {
 		return "", "", err
 	}
 
-	// Navigate to the "content" field
-	content := ""
-	if data, ok := response["data"].(map[string]interface{}); ok {
-		if completion, ok := data["completion"].(map[string]interface{}); ok {
-			if choices, ok := completion["choices"].([]interface{}); ok && len(choices) > 0 {
-				if choice, ok := choices[0].(map[string]interface{}); ok {
-					if message, ok := choice["message"].(map[string]interface{}); ok {
-						if contentVal, ok := message["content"].(string); ok {
-							content = contentVal
-						}
-					}
-				}
-			}
-		}
+	if len(response.Data.Completion.Choices) == 0 {
+		return "", "", fmt.Errorf("no translation choices returned")
 	}
 
-	if content != "" {
-		if sourceLanguage != "" {
-			return sourceLanguage, content, nil
-		}
-		stringSlice := strings.Split(content, "|||")
-		if len(stringSlice) <= 1 {
-			return content, "", fmt.Errorf("Invalid response format")
-		}
-		return stringSlice[1], stringSlice[0], nil
-	} else {
-		return "something went wrong", "", fmt.Errorf("Invalid response format")
+	content := response.Data.Completion.Choices[0].Message.Content
+	if content == "" {
+		return "", "", fmt.Errorf("empty translation content")
 	}
+
+	return parseTranslationResponse(content, sourceLanguage)
 }
