@@ -25,7 +25,7 @@ func ActionHandler(event types.ChatEvent) chat.Message {
 	case ActionTranslate:
 		return handleTranslate(event)
 	default:
-		slog.Warn("Unknown action: %s", action)
+		slog.Warn("Unknown action", "action", action)
 		return chat.Message{Text: "Unknown Action"}
 	}
 }
@@ -62,12 +62,12 @@ func handleTranslate(event types.ChatEvent) chat.Message {
 	formInput = extractFormInput(*event.Common)
 	err := validateFormInput(formInput)
 	if err != nil {
-		slog.Warn("invalid validation: %v", err)
+		slog.Warn("invalid validation", "error", err)
 		errorMessage = fmt.Sprint(err)
 	} else {
 		translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
 		if err != nil {
-			slog.Error("error translate: %v", err)
+			slog.Error("error translate", "error", err)
 			errorMessage = fmt.Sprint(err)
 		} else {
 			configJson, _ := json.Marshal(formInput)

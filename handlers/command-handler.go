@@ -37,7 +37,7 @@ func getConfig(configKey string) types.Config {
 
 	var config types.Config
 	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
-		slog.Error("Failed to unmarshal config", err)
+		slog.Error("Failed to unmarshal config: " + err.Error())
 		return types.Config{ShowOriginalText: true}
 	}
 

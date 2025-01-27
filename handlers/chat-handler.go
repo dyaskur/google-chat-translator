@@ -50,7 +50,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 	// Respond with the constructed chat message.
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(reply); err != nil {
-		slog.Error("Failed to send response:", err)
+		slog.Error("Failed to send response: " + err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
@@ -58,7 +58,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 // logDebugInfo logs event details for debugging purposes.
 func logDebugInfo(event types.ChatEvent) {
 	command := getCommandName(event)
-	locale := "unknown"
+	locale := "?"
 	if event.Common != nil {
 		locale = event.Common.UserLocale
 	}

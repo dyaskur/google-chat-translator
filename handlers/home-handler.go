@@ -79,7 +79,7 @@ func handleSubmitForm(event ChatRequest, configKey string) RenderAction {
 		var err error
 		translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
 		if err != nil {
-			slog.Error("Translation error", err)
+			slog.Error("Translation error" + err.Error())
 			errorMessage = err.Error()
 		} else {
 			if configJson, err := json.Marshal(formInput); err == nil {
@@ -89,7 +89,7 @@ func handleSubmitForm(event ChatRequest, configKey string) RenderAction {
 	} else {
 		errorMessage = err.Error()
 	}
-	slog.Info("Translation result", translatedText, formInput.Target, formInput.Source, formInput.Text)
+	slog.Info("Translation result", formInput.Target, translatedText, formInput.Source, formInput.Text)
 	formInput.Result = translatedText
 	return RenderAction{
 		Action: Action{
@@ -104,7 +104,7 @@ func handleInitialLoad(configKey string) RenderAction {
 	var formInput types.FormInput
 	if lastInputJson, err := utils.GetCache(configKey); err == nil && lastInputJson != "" {
 		if err := json.Unmarshal([]byte(lastInputJson), &formInput); err != nil {
-			slog.Error("Error unmarshaling cached input", err)
+			slog.Error("Error unmarshaling cached input: " + err.Error())
 		}
 	}
 
@@ -123,7 +123,7 @@ func handleInitialLoad(configKey string) RenderAction {
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	var event ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		slog.Error("Error decoding request", err)
+		slog.Error("Error decoding request: " + err.Error())
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
@@ -144,7 +144,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		slog.Error("Error encoding response", err)
+		slog.Error("Error encoding response: " + err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
