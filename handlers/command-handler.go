@@ -103,7 +103,7 @@ func handleLanguageTranslation(event types.ChatEvent, config types.Config, comma
 	targetLanguage := utils.GetById(commandID)
 	translatedText, source, err := translators.TranslateText(targetLanguage.Code, event.Message.ArgumentText, "")
 	if err != nil {
-		log.Printf("Translation error: %v", err)
+		slog.Error("Translation error" + err.Error())
 		return chat.Message{}
 	}
 
