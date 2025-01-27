@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -17,7 +17,7 @@ func geminiTranslate(targetLanguage string, text string, sourceLanguage string) 
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
 	if err != nil {
-		log.Fatal(err)
+		return "", "", err
 	}
 	defer client.Close()
 
@@ -40,7 +40,7 @@ func geminiTranslate(targetLanguage string, text string, sourceLanguage string) 
 	message := "Respond concisely without any introductory or closing remarks, additional comments, or greetings." + command + text
 	res, err := model.GenerateContent(ctx, genai.Text(message))
 	if err != nil {
-		log.Fatal(err)
+		return "", "", err
 	}
 	result := getResponse(res)
 
@@ -56,7 +56,8 @@ func getResponse(resp *genai.GenerateContentResponse) string {
 		if txt, ok := part.(genai.Text); ok {
 			var result []string
 			if err := json.Unmarshal([]byte(txt), &result); err != nil {
-				log.Fatal(err)
+				slog.Error("Error unmarshalling response: " + err.Error())
+				return ""
 			}
 			return result[0]
 		}
