@@ -42,6 +42,8 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 		reply = ActionHandler(event)
 	case "ADDED_TO_SPACE":
 		reply = handleAddedToSpaceEvent()
+	case "REMOVED_FROM_SPACE":
+		reply = handleRemovedToSpaceEvent()
 	default:
 		http.Error(w, "Unsupported event type", http.StatusNotImplemented)
 		return
@@ -114,6 +116,16 @@ func handleAddedToSpaceEvent() chat.Message {
 			"`/french Wie geht's?`\n" +
 			"\nBy default, the original message will be shown. Use `/config` to change this." +
 			"\nTo see all available languages, use the `/translate` command.",
+	}
+}
+
+// handleRemovedToSpaceEvent handles events when the bot/app is removed from a space/user.
+func handleRemovedToSpaceEvent() chat.Message {
+	return chat.Message{
+		ActionResponse: &chat.ActionResponse{
+			Type: "NEW_MESSAGE",
+		},
+		Text: "Good bye",
 	}
 }
 
