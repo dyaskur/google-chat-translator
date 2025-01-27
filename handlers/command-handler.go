@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"log/slog"
 
 	"google.golang.org/api/chat/v1"
