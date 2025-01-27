@@ -12,8 +12,8 @@ import (
 func init() {
 
 	opts := &slog.HandlerOptions{
-		Level:     slog.LevelDebug, // Set minimum level
-		AddSource: true,
+		Level: slog.LevelDebug, // Set minimum level
+		//AddSource: true,
 	}
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, opts)

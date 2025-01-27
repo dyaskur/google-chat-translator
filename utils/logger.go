@@ -26,12 +26,16 @@ func (h *CloudLoggingHandler) Handle(ctx context.Context, r slog.Record) error {
 		severity = logging.Error
 	}
 
-	// Add severity to the attributes
 	attrs := make([]slog.Attr, 0, r.NumAttrs()+1)
 	r.Attrs(func(a slog.Attr) bool {
+		// Skip the "level" attribute since it will be added as severity
+		if a.Key != "level" {
+			attrs = append(attrs, a)
+		}
 		attrs = append(attrs, a)
 		return true
 	})
+	// Add severity to the attributes, this will make it easier to filter in cloud log explorer
 	attrs = append(attrs, slog.String("severity", severity.String()))
 
 	// Create a new record with severity
