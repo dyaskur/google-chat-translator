@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"google.golang.org/api/chat/v1"
-	"log"
+	"log/slog"
 	"strconv"
 	"yaskur.com/chat-translator/cards"
 	"yaskur.com/chat-translator/translators"
@@ -25,7 +25,7 @@ func ActionHandler(event types.ChatEvent) chat.Message {
 	case ActionTranslate:
 		return handleTranslate(event)
 	default:
-		log.Printf("Unknown action: %s", action)
+		slog.Warn("Unknown action: %s", action)
 		return chat.Message{Text: "Unknown Action"}
 	}
 }
@@ -62,12 +62,12 @@ func handleTranslate(event types.ChatEvent) chat.Message {
 	formInput = extractFormInput(*event.Common)
 	err := validateFormInput(formInput)
 	if err != nil {
-		log.Printf("invalid validation: %v", err)
+		slog.Warn("invalid validation: %v", err)
 		errorMessage = fmt.Sprint(err)
 	} else {
 		translatedText, source, err = translators.TranslateText(formInput.Target, formInput.Text, formInput.Source)
 		if err != nil {
-			log.Printf("error translate: %v", err)
+			slog.Error("error translate: %v", err)
 			errorMessage = fmt.Sprint(err)
 		} else {
 			configJson, _ := json.Marshal(formInput)

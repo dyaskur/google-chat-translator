@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"log"
+	"log/slog"
 	"math/rand"
 	"strings"
 )
@@ -391,7 +391,7 @@ func fetchRandomElement(data map[string][]string, locale string, dataType string
 
 	elements := data[mainLocale]
 	if len(elements) == 0 {
-		log.Printf("%s locale is not supported for %s, defaulting to 'en'", locale, dataType)
+		slog.Info("Locale not supported, defaulting to 'en'", "locale", locale, "dataType", dataType)
 		elements = data["en"]
 	}
 

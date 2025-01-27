@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"google.golang.org/api/chat/v1"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"yaskur.com/chat-translator/types"
@@ -50,7 +50,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 	// Respond with the constructed chat message.
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(reply); err != nil {
-		log.Printf("Failed to send response: %v", err)
+		slog.Error("Failed to send response:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
@@ -62,15 +62,14 @@ func logDebugInfo(event types.ChatEvent) {
 	if event.Common != nil {
 		locale = event.Common.UserLocale
 	}
-	log.Printf(
-		"type: %s; time: %s; user: %s; email: %s; space: %s; command: %s; locale: %s",
-		event.Type,
-		event.EventTime,
-		event.User.DisplayName,
-		event.User.Email,
-		event.Space.Type,
-		command,
-		locale,
+	slog.Debug("Received event",
+		"type", event.Type,
+		"time", event.EventTime,
+		"user", event.User.DisplayName,
+		"email", event.User.Email,
+		"space", event.Space.Type,
+		"command", command,
+		"locale", locale,
 	)
 }
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"log/slog"
 
 	"google.golang.org/api/chat/v1"
 	"yaskur.com/chat-translator/cards"
@@ -36,7 +37,7 @@ func getConfig(configKey string) types.Config {
 
 	var config types.Config
 	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
-		log.Printf("Failed to unmarshal config: %v", err)
+		slog.Error("Failed to unmarshal config", err)
 		return types.Config{ShowOriginalText: true}
 	}
 
