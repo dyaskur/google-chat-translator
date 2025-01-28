@@ -3,6 +3,7 @@ module yaskur.com/chat-translator
 go 1.23
 
 require (
+	cloud.google.com/go/logging v1.13.0
 	cloud.google.com/go/translate v1.12.2
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.0
 	github.com/google/generative-ai-go v0.19.0
@@ -14,7 +15,7 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.116.0 // indirect
+	cloud.google.com/go v0.117.0 // indirect
 	cloud.google.com/go/ai v0.10.0 // indirect
 	cloud.google.com/go/auth v0.13.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
@@ -48,6 +49,7 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
+	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/grpc v1.68.0 // indirect

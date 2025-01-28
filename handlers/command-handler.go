@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
+
 	"google.golang.org/api/chat/v1"
-	"log"
-	"strconv"
 	"yaskur.com/chat-translator/cards"
 	"yaskur.com/chat-translator/translators"
 	"yaskur.com/chat-translator/types"
@@ -12,97 +12,116 @@ import (
 )
 
 func CommandHandler(event types.ChatEvent) chat.Message {
-	message := event.Message
-	commandId := int16(message.SlashCommand.CommandId)
-	log.Printf("commandID: %s", strconv.FormatInt(message.SlashCommand.CommandId, 10))
+	commandID := int16(event.Message.SlashCommand.CommandId)
 	configKey := event.Space.Name
-	configJson, _ := utils.GetCache(configKey)
-	messageJson, _ := json.Marshal(event.Message)
-	log.Printf("Message %s", messageJson)
+
+	config := getConfig(configKey)
+	switch commandID {
+	case 1: // /config
+		return handleConfigCommand(config)
+	case 2: // /help
+		return handleHelpCommand()
+	case 3: // /translate
+		return handleTranslateCommand(event, configKey)
+	default:
+		return handleLanguageTranslation(event, config, commandID)
+	}
+}
+
+func getConfig(configKey string) types.Config {
+	configJSON, err := utils.GetCache(configKey)
+	if err != nil || configJSON == "" {
+		return types.Config{ShowOriginalText: true}
+	}
 
 	var config types.Config
-	if configJson != "" {
-		err := json.Unmarshal([]byte(configJson), &config)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		config = types.Config{
-			ShowOriginalText: true,
-		}
-	}
-	if commandId == 1 {
-		// commandId 1 = /config
-		reply := chat.Message{
-			ActionResponse: &chat.ActionResponse{
-				Type: "DIALOG",
-				DialogAction: &chat.DialogAction{
-					Dialog: &chat.Dialog{
-						Body: cards.ConfigForm(config),
-					},
-				},
-			},
-		}
-		return reply
-	} else if commandId == 2 {
-		reply := chat.Message{
-			ActionResponse: &chat.ActionResponse{
-				Type: "NEW_MESSAGE",
-			},
-			Text: "I can translate your messages to any language. " +
-				"Please use command to do translation" + "\ne.g: \n" +
-				"`/spanish Hello everyone`\n" +
-				"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
-				"`/japanese ¡Vamos a empezar!`\n" +
-				"`/russian Buenos dias`\n" +
-				"`/french Wie geht's?`\n" +
-				"`\n By default original message will be shown, use `/config` to change that`\n" +
-				"If you want to use translate form and see all available languages use `/translate` command\n",
-		}
-		return reply
-	} else if commandId == 3 {
-		// commandId 1 = /translate
-		// commandId 3 = /translate
-
-		var formInput types.FormInput
-		lastInputJson, _ := utils.GetCache(configKey)
-		if lastInputJson != "" {
-			err := json.Unmarshal([]byte(lastInputJson), &formInput)
-			if err != nil {
-				panic(err)
-			}
-		}
-		reply := chat.Message{
-			ActionResponse: &chat.ActionResponse{
-				Type: "DIALOG",
-				DialogAction: &chat.DialogAction{
-					Dialog: &chat.Dialog{
-						Body: cards.TranslateForm(formInput, "", "").Card,
-					},
-				},
-			},
-		}
-		return reply
+	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
+		slog.Error("Failed to unmarshal config: " + err.Error())
+		return types.Config{ShowOriginalText: true}
 	}
 
-	targetLanguage := utils.GetById(commandId)
-	log.Printf("targetLanguage: %s", targetLanguage.Code)
-	translatedText, source, err := translators.TranslateText(targetLanguage.Code, message.ArgumentText, "")
+	return config
+}
+
+func handleConfigCommand(config types.Config) chat.Message {
+	return chat.Message{
+		ActionResponse: &chat.ActionResponse{
+			Type: "DIALOG",
+			DialogAction: &chat.DialogAction{
+				Dialog: &chat.Dialog{
+					Body: cards.ConfigForm(config),
+				},
+			},
+		},
+	}
+}
+
+func handleHelpCommand() chat.Message {
+	replyText := "I can translate your messages to any language. " +
+		"Please use command to do translation, e.g.:\n" +
+		"`/spanish Hello everyone`\n" +
+		"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
+		"`/japanese ¡Vamos a empezar!`\n" +
+		"`/russian Buenos dias`\n" +
+		"`/french Wie geht's?`\n" +
+		"By default, original message will be shown, use `/config` to change that.\n" +
+		"Use `/translate` for a translate form to view all available languages.\n"
+
+	return chat.Message{
+		ActionResponse: &chat.ActionResponse{
+			Type: "NEW_MESSAGE",
+		},
+		Text: replyText,
+	}
+}
+
+func handleTranslateCommand(event types.ChatEvent, configKey string) chat.Message {
+	formInput := getFormInput(configKey)
+
+	return chat.Message{
+		ActionResponse: &chat.ActionResponse{
+			Type: "DIALOG",
+			DialogAction: &chat.DialogAction{
+				Dialog: &chat.Dialog{
+					Body: cards.TranslateForm(formInput, "", "").Card,
+				},
+			},
+		},
+	}
+}
+
+func getFormInput(configKey string) types.FormInput {
+	lastInputJSON, _ := utils.GetCache(configKey)
+	var formInput types.FormInput
+	if lastInputJSON != "" {
+		_ = json.Unmarshal([]byte(lastInputJSON), &formInput)
+	}
+	return formInput
+}
+
+func handleLanguageTranslation(event types.ChatEvent, config types.Config, commandID int16) chat.Message {
+	targetLanguage := utils.GetById(commandID)
+	translatedText, source, err := translators.TranslateText(targetLanguage.Code, event.Message.ArgumentText, "")
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Translation error" + err.Error())
+		return chat.Message{}
 	}
-	sourceLanguage := utils.GetByCode(source)
 
-	user := event.User
-	response := "_" + user.DisplayName + " said: (translated to " + targetLanguage.Language + ")_\n" + translatedText
-	if config.ShowOriginalText {
-		response = response + "\nTranslated from " + sourceLanguage.Language + ", original message:\n" + message.ArgumentText
-	}
-	reply := chat.Message{
+	sourceLanguage := utils.GetByCode(source)
+	response := formatResponse(event.User.DisplayName, targetLanguage.Language, translatedText, sourceLanguage.Language, event.Message.ArgumentText, config.ShowOriginalText)
+
+	return chat.Message{
 		ActionResponse: &chat.ActionResponse{
 			Type: "NEW_MESSAGE",
 		},
 		Text: response,
 	}
-	return reply
+}
+
+func formatResponse(userDisplayName, targetLanguage, translatedText, sourceLanguage, originalText string, showOriginal bool) string {
+	response := "_" + userDisplayName + " said: (translated to " + targetLanguage + ")_\n" + translatedText
+	if showOriginal {
+		response += "\nTranslated from " + sourceLanguage + ", original message:\n" + originalText
+	}
+	return response
 }

@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"google.golang.org/api/chat/v1"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"yaskur.com/chat-translator/types"
@@ -29,71 +29,118 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if os.Getenv("DEBUG") == "true" {
-		command := getCommandName(event)
-		locale := "err"
-		if event.Common != nil {
-			locale = event.Common.UserLocale
-		}
-		log.Printf("type %s; time %s; user %s; email %s; space %s; command %s; locale %s;", event.Type, event.EventTime, event.User.DisplayName, event.User.Email, event.Space.Type, command, locale)
-
-		if event.Message != nil {
-			messageJson, _ := json.Marshal(event.Message)
-			log.Printf("messageJson %s", messageJson)
-		}
+		logDebugInfo(event)
 	}
 
 	var reply chat.Message
-	if event.Type == "MESSAGE" || event.Message != nil {
-		message := event.Message
-		if message.SlashCommand != nil {
-			reply = CommandHandler(event)
-		} else if message.Text != "" {
-			log.Printf(message.Text)
-			locale := "en"
-			if event.Common != nil {
-				locale = event.Common.UserLocale
-			}
-			greeting := utils.GetRandomGreeting(locale)
-			instruction := utils.GetRandomInstruction(locale)
-			exampleCommand := utils.GetRandomExampleCommand(locale)
-			reply = chat.Message{
-				ActionResponse: &chat.ActionResponse{
-					Type: "NEW_MESSAGE",
-				},
-				Text: greeting + "\n" + instruction +
-					"\ne.g: \n" +
-					"`" + exampleCommand + "`\n" +
-					"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
-					"`/japanese ¡Vamos a empezar!`\n" +
-					"`/russian Buenos dias`\n" +
-					"`/french Wie geht's?`\n" +
-					"`\n By default original message will be shown, use `/config` to change that`\n",
-			}
+	switch event.Type {
+	case "MESSAGE":
+		if event.Message != nil {
+			reply = handleMessageEvent(event)
+		}
+	case "CARD_CLICKED", "SUBMIT_FORM":
+		reply = ActionHandler(event)
+	case "ADDED_TO_SPACE":
+		reply = handleAddedToSpaceEvent()
+	case "REMOVED_FROM_SPACE":
+		reply = handleRemovedToSpaceEvent()
+	default:
+		http.Error(w, "Unsupported event type", http.StatusNotImplemented)
+		return
+	}
+
+	// Respond with the constructed chat message.
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(reply); err != nil {
+		slog.Error("Failed to send response: " + err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// logDebugInfo logs event details for debugging purposes.
+func logDebugInfo(event types.ChatEvent) {
+	command := getCommandName(event)
+	locale := "?"
+	if event.Common != nil {
+		locale = event.Common.UserLocale
+	}
+	slog.Debug("Received event",
+		"type", event.Type,
+		"time", event.EventTime,
+		"user", event.User.DisplayName,
+		"email", event.User.Email,
+		"space", event.Space.Type,
+		"command", command,
+		"locale", locale,
+	)
+}
+
+// handleMessageEvent handles MESSAGE events.
+func handleMessageEvent(event types.ChatEvent) chat.Message {
+	message := event.Message
+
+	if message.SlashCommand != nil {
+		return CommandHandler(event)
+	}
+
+	if message.Text != "" {
+		locale := "en"
+		if event.Common != nil {
+			locale = event.Common.UserLocale
 		}
 
-	} else if event.Type == "CARD_CLICKED" || event.Type == "SUBMIT_FORM" {
-		reply = ActionHandler(event)
-	} else if event.Type == "ADDED_TO_SPACE" {
-
-		reply = chat.Message{
+		return chat.Message{
 			ActionResponse: &chat.ActionResponse{
 				Type: "NEW_MESSAGE",
 			},
-			Text: "Welcome to Abang translator! I can translate your messages to any language. " +
-				"Please use command to do translation" + "\ne.g: \n" +
-				"`/spanish Hello everyone`\n" +
-				"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
-				"`/japanese ¡Vamos a empezar!`\n" +
-				"`/russian Buenos dias`\n" +
-				"`/french Wie geht's?`\n" +
-				"`\n By default original message will be shown, use `/config` to change that`\n" +
-				"If you want to use translate form and see all available languages use `/translate` command",
+			Text: buildDefaultMessage(locale),
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(reply)
-	if err != nil {
-		log.Fatal(err)
+	return chat.Message{}
+}
+
+// handleAddedToSpaceEvent handles events when the bot is added to a space.
+func handleAddedToSpaceEvent() chat.Message {
+
+	return chat.Message{
+		ActionResponse: &chat.ActionResponse{
+			Type: "NEW_MESSAGE",
+		},
+		Text: "Welcome to Abang Translator! I can translate your messages to any language. " +
+			"\nPlease use a command to perform translations. Examples:\n" +
+			"`/spanish Hello everyone`\n" +
+			"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
+			"`/japanese ¡Vamos a empezar!`\n" +
+			"`/russian Buenos dias`\n" +
+			"`/french Wie geht's?`\n" +
+			"\nBy default, the original message will be shown. Use `/config` to change this." +
+			"\nTo see all available languages, use the `/translate` command.",
 	}
+}
+
+// handleRemovedToSpaceEvent handles events when the bot/app is removed from a space/user.
+func handleRemovedToSpaceEvent() chat.Message {
+	return chat.Message{
+		ActionResponse: &chat.ActionResponse{
+			Type: "NEW_MESSAGE",
+		},
+		Text: "Good bye",
+	}
+}
+
+// buildDefaultMessage constructs a default message for users.
+func buildDefaultMessage(locale string) string {
+	greeting := utils.GetRandomGreeting(locale)
+	instruction := utils.GetRandomInstruction(locale)
+	exampleCommand := utils.GetRandomExampleCommand(locale)
+
+	return greeting + "\n" + instruction +
+		"\ne.g:\n" +
+		"`" + exampleCommand + "`\n" +
+		"`/arabic Semangat menjalani hari, semoga produktif!`\n" +
+		"`/japanese ¡Vamos a empezar!`\n" +
+		"`/russian Buenos dias`\n" +
+		"`/french Wie geht's?`\n" +
+		"\nBy default, the original message will be shown. Use `/config` to change this."
 }
