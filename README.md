@@ -26,4 +26,45 @@ https://workspace.google.com/marketplace/app/abang_translator/963775668283
 
 
 # How to deploy
-Coming soon
+Pushing to `main` deploys the function through the `Deploy` GitHub Actions workflow
+(`.github/workflows/deploy.yml`). It can also be run by hand from the Actions tab.
+All project-specific values are repository secrets, and the workflow hides gcloud
+output, so the logs only show whether the deploy succeeded or failed.
+
+## Repository secrets
+
+| Secret | Required | Value |
+| --- | --- | --- |
+| `GCP_PROJECT_ID` | yes | Google Cloud project ID |
+| `GCP_REGION` | yes | Function region, e.g. `asia-southeast1` |
+| `GCP_FUNCTION_NAME` | yes | Cloud Function name |
+| `REDIS_URI` | yes | Redis connection URI |
+| `MYMEMORY_EMAIL` | no | Email sent to MyMemory for the higher daily quota |
+| `GOOGLE_MONTHLY_CHAR_LIMIT` | no | Monthly Google Translate character budget |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | one auth option | Full provider name, `projects/NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER` |
+| `GCP_SERVICE_ACCOUNT` | with the option above | Deployer service account email |
+| `GCP_CREDENTIALS_JSON` | other auth option | JSON key of the deployer service account |
+
+Use either Workload Identity Federation (the first two auth secrets, no long-lived key) or
+`GCP_CREDENTIALS_JSON`, not both.
+
+## Google Cloud setup
+
+1. Create a deployer service account and grant it `Cloud Functions Admin`, `Cloud Run Admin`
+   and `Service Account User`.
+2. For Workload Identity Federation, enable the IAM Service Account Credentials API, then:
+   ```sh
+   gcloud iam workload-identity-pools create github --location=global
+   gcloud iam workload-identity-pools providers create-oidc github \
+     --location=global --workload-identity-pool=github \
+     --issuer-uri=https://token.actions.githubusercontent.com \
+     --attribute-mapping=google.subject=assertion.sub,attribute.repository=assertion.repository \
+     --attribute-condition="assertion.repository=='dyaskur/google-chat-translator'"
+   gcloud iam service-accounts add-iam-policy-binding DEPLOYER_SA_EMAIL \
+     --role=roles/iam.workloadIdentityUser \
+     --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/dyaskur/google-chat-translator"
+   ```
+   Otherwise create a JSON key for the service account and store it as `GCP_CREDENTIALS_JSON`.
+3. The function's runtime service account still needs the `Cloud Translation API User` role.
+
+`deploy.sh.example` remains for deploying from a local machine.
