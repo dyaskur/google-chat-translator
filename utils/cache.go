@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/redis/go-redis/v9"
 	"os"
+	"time"
 )
 
 var ctx = context.Background()
@@ -41,4 +42,15 @@ func GetCache(key string) (string, error) {
 	//	return ""
 	//}
 	return value, err
+}
+
+// IncrementCounter adds n to the counter at key and keeps it for ttl.
+func IncrementCounter(key string, n int64, ttl time.Duration) (int64, error) {
+	pipe := client().TxPipeline()
+	incr := pipe.IncrBy(ctx, key, n)
+	pipe.Expire(ctx, key, ttl)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return 0, err
+	}
+	return incr.Val(), nil
 }
