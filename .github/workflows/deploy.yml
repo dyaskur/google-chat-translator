@@ -1,0 +1,99 @@
+# Deploys the Cloud Function on every push to main (or manually).
+#
+# Every project-specific value lives in repository secrets, and gcloud output is
+# discarded so the logs only say whether the deploy succeeded or failed.
+# See "How to deploy" in README.md for the secrets and GCP setup.
+
+name: Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - "**.md"
+      - "assets/**"
+      - ".github/workflows/go.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.26'
+
+    - name: Test
+      run: go test -short ./... > /dev/null 2>&1 || { echo "Tests failed"; exit 1; }
+
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        # Workload Identity Federation when configured, otherwise a JSON key.
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        credentials_json: ${{ secrets.GCP_CREDENTIALS_JSON }}
+        create_credentials_file: true
+        export_environment_variables: false
+
+    - name: Set up gcloud
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Deploy function
+      env:
+        CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ${{ steps.auth.outputs.credentials_file_path }}
+        PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        PROJECT_REGION: ${{ secrets.GCP_REGION }}
+        FUNCTION_NAME: ${{ secrets.GCP_FUNCTION_NAME }}
+        REDIS_URI: ${{ secrets.REDIS_URI }}
+        MYMEMORY_EMAIL: ${{ secrets.MYMEMORY_EMAIL }}
+        GOOGLE_MONTHLY_CHAR_LIMIT: ${{ secrets.GOOGLE_MONTHLY_CHAR_LIMIT }}
+      run: |
+        for name in PROJECT_ID PROJECT_REGION FUNCTION_NAME REDIS_URI; do
+          if [ -z "${!name}" ]; then
+            echo "Deploy failed: a required secret is missing"
+            exit 1
+          fi
+        done
+
+        # Env vars go through a file so values with commas or quotes survive;
+        # optional ones are only set when their secret exists.
+        env_file="$RUNNER_TEMP/env.yaml"
+        : > "$env_file"
+        for name in REDIS_URI MYMEMORY_EMAIL GOOGLE_MONTHLY_CHAR_LIMIT; do
+          if [ -n "${!name}" ]; then
+            printf '%s: %s\n' "$name" "$(jq -n --arg v "${!name}" '$v')" >> "$env_file"
+          fi
+        done
+
+        if gcloud functions deploy "$FUNCTION_NAME" \
+          --project="$PROJECT_ID" \
+          --gen2 \
+          --runtime=go126 \
+          --region="$PROJECT_REGION" \
+          --env-vars-file="$env_file" \
+          --source=. \
+          --entry-point=TranslatorHTTP \
+          --trigger-http \
+          --allow-unauthenticated \
+          --quiet > /dev/null 2>&1; then
+          rm -f "$env_file"
+          echo "Deploy succeeded"
+        else
+          rm -f "$env_file"
+          echo "Deploy failed (details are in Cloud Build logs in the Google Cloud console)"
+          exit 1
+        fi

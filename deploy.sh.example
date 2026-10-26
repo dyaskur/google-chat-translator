@@ -7,7 +7,7 @@ gcloud config set project $PROJECT_ID
 
 gcloud functions deploy $FUNCTION_NAME \
   --gen2 \
-  --runtime=go123 \
+  --runtime=go126 \
   --region=$PROJECT_REGION \
   --set-env-vars REDIS_URI=$REDIS_URI \
   --source=. \
