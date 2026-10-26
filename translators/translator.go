@@ -20,7 +20,7 @@ func TranslateText(targetLanguage string, text string, sourceLanguage string) (s
 		if err == nil {
 			return result, detectedLanguage, nil
 		}
-		slog.Warn("translator failed, trying next: " + err.Error())
+		slog.Warn("translator failed, trying next", "error", err)
 		errs = append(errs, err)
 	}
 	return "", "", errors.Join(errs...)
