@@ -41,7 +41,7 @@ func googleTranslate(targetLanguage string, text string, sourceLanguage string) 
 		return "", "", fmt.Errorf("translate: %w", err)
 	}
 	if len(resp) == 0 {
-		return "", "", fmt.Errorf("translate returned empty response to text: %s", text)
+		return "", "", fmt.Errorf("translate returned empty response")
 	}
 	return resp[0].Text, resp[0].Source.String(), nil
 }
