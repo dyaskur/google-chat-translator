@@ -3,13 +3,15 @@ PROJECT_REGION="asia-southeast1"
 FUNCTION_NAME="go-function"
 REDIS_URI="rediss://default:bla@redishost:6379"
 GEMINI_API_KEY=""
+MYMEMORY_EMAIL="you@example.com"
+GOOGLE_MONTHLY_CHAR_LIMIT="400000"
 gcloud config set project $PROJECT_ID
 
 gcloud functions deploy $FUNCTION_NAME \
   --gen2 \
   --runtime=go123 \
   --region=$PROJECT_REGION \
-  --set-env-vars REDIS_URI=$REDIS_URI \
+  --set-env-vars REDIS_URI=$REDIS_URI,MYMEMORY_EMAIL=$MYMEMORY_EMAIL,GOOGLE_MONTHLY_CHAR_LIMIT=$GOOGLE_MONTHLY_CHAR_LIMIT \
   --source=. \
   --entry-point=TranslatorHTTP \
   --trigger-http \
