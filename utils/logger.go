@@ -32,7 +32,6 @@ func (h *CloudLoggingHandler) Handle(ctx context.Context, r slog.Record) error {
 		if a.Key != "level" {
 			attrs = append(attrs, a)
 		}
-		attrs = append(attrs, a)
 		return true
 	})
 	// Add severity to the attributes, this will make it easier to filter in cloud log explorer

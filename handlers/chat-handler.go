@@ -66,7 +66,7 @@ func logDebugInfo(event types.ChatEvent) {
 	}
 	slog.Debug("Received event",
 		"type", event.Type,
-		"time", event.EventTime,
+		"eventTime", event.EventTime,
 		"user", event.User.DisplayName,
 		"email", event.User.Email,
 		"space", event.Space.Type,
