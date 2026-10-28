@@ -2,6 +2,7 @@ package translators
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"net/http"
@@ -20,6 +21,10 @@ const (
 	myMemoryMaxBytes = 500 // q is limited to 500 UTF-8 bytes per request
 	myMemoryTimeout  = 5 * time.Second
 )
+
+// errMyMemoryQuota means the daily free quota is used up, so there is no point
+// calling MyMemory again until it resets.
+var errMyMemoryQuota = errors.New("mymemory: daily quota exhausted")
 
 type myMemoryResponse struct {
 	ResponseData struct {
@@ -56,6 +61,9 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return "", "", errMyMemoryQuota
+	}
 	if resp.StatusCode != http.StatusOK {
 		return "", "", fmt.Errorf("mymemory: unexpected status code: %d", resp.StatusCode)
 	}
@@ -66,11 +74,14 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	}
 
 	status := strings.Trim(string(response.ResponseStatus), `"`)
+	if status == "429" {
+		return "", "", errMyMemoryQuota
+	}
 	if status != "200" {
 		return "", "", fmt.Errorf("mymemory: status %s: %s", status, response.ResponseDetails)
 	}
 	if response.QuotaFinished != nil && *response.QuotaFinished {
-		return "", "", fmt.Errorf("mymemory: daily quota finished")
+		return "", "", errMyMemoryQuota
 	}
 
 	result := response.ResponseData.TranslatedText
@@ -78,7 +89,7 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 		return "", "", fmt.Errorf("mymemory: empty translation")
 	}
 	if strings.HasPrefix(result, "MYMEMORY WARNING") {
-		return "", "", fmt.Errorf("mymemory: quota warning")
+		return "", "", errMyMemoryQuota
 	}
 
 	detected := sourceLanguage

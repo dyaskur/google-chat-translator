@@ -1,6 +1,7 @@
 package translators
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -71,6 +72,36 @@ func TestMyMemoryTranslateErrors(t *testing.T) {
 				t.Error("expected error")
 			}
 		})
+	}
+}
+
+func TestMyMemoryTranslateReportsQuotaExhausted(t *testing.T) {
+	cases := map[string]string{
+		"quota finished": `{"responseData":{"translatedText":"hello"},"quotaFinished":true,"responseDetails":"","responseStatus":200}`,
+		"quota warning":  `{"responseData":{"translatedText":"MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY"},"responseDetails":"","responseStatus":200}`,
+		"status 429":     `{"responseData":{"translatedText":""},"responseDetails":"TOO MANY REQUESTS","responseStatus":"429"}`,
+	}
+	for name, body := range cases {
+		t.Run(name, func(t *testing.T) {
+			serveMyMemory(t, body, nil)
+			if _, _, err := myMemoryTranslate("en", "halo", "id"); !errors.Is(err, errMyMemoryQuota) {
+				t.Errorf("expected quota error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestMyMemoryTranslateReportsHTTP429AsQuota(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	t.Cleanup(server.Close)
+	original := myMemoryAPIURL
+	myMemoryAPIURL = server.URL
+	t.Cleanup(func() { myMemoryAPIURL = original })
+
+	if _, _, err := myMemoryTranslate("en", "halo", "id"); !errors.Is(err, errMyMemoryQuota) {
+		t.Errorf("expected quota error, got %v", err)
 	}
 }
 
