@@ -100,7 +100,7 @@ func getFormInput(configKey string) types.FormInput {
 }
 
 func handleLanguageTranslation(event types.ChatEvent, config types.Config, commandID int16) chat.Message {
-	targetLanguage := utils.GetById(commandID)
+	targetLanguage := resolveTargetLanguage(event, commandID)
 	translatedText, source, err := translators.TranslateText(targetLanguage.Code, event.Message.ArgumentText, "")
 	if err != nil {
 		slog.Error("Translation error" + err.Error())
@@ -116,6 +116,28 @@ func handleLanguageTranslation(event types.ChatEvent, config types.Config, comma
 		},
 		Text: response,
 	}
+}
+
+// resolveTargetLanguage picks the language from the slash command name the user
+// typed, falling back to the command ID. The IDs are assigned by hand in the
+// Google Chat console, so a mismatch there (e.g. /korean sent with Konkani's ID)
+// would otherwise translate into the wrong language.
+func resolveTargetLanguage(event types.ChatEvent, commandID int16) utils.Languages {
+	byID := utils.GetById(commandID)
+	command := getCommandName(event)
+	byCommand, ok := utils.GetByCommand(command)
+	if !ok {
+		return byID
+	}
+	if byCommand.Code != byID.Code {
+		slog.Warn("Slash command ID does not match command name",
+			"command", command,
+			"commandId", commandID,
+			"idLanguage", byID.Language,
+			"commandLanguage", byCommand.Language,
+		)
+	}
+	return byCommand
 }
 
 func formatResponse(userDisplayName, targetLanguage, translatedText, sourceLanguage, originalText string, showOriginal bool) string {
