@@ -41,7 +41,7 @@ var LanguagesData = []Languages{
 	{Language: "Finnish", Code: "fi", IDs: []int16{42, 218}, Commands: []string{"/finnish"}},
 	{Language: "French", Code: "fr", IDs: []int16{43}, Commands: []string{"/french"}},
 	{Language: "Frisian", Code: "fy", IDs: []int16{44}, Commands: []string{"/frisian"}},
-	{Language: "Galician", Code: "gy", IDs: []int16{48}, Commands: []string{"/galician"}},
+	{Language: "Galician", Code: "gl", IDs: []int16{48}, Commands: []string{"/galician"}},
 	{Language: "Georgian", Code: "ka", IDs: []int16{46}, Commands: []string{"/georgian"}},
 	{Language: "German", Code: "de", IDs: []int16{47, 219}, Commands: []string{"/german", "/deutch"}},
 	{Language: "Greek", Code: "el", IDs: []int16{49}, Commands: []string{"/greek"}},
@@ -163,8 +163,23 @@ func GroupById() map[int16]Languages {
 	return grouped
 }
 
+// legacyCodes maps codes the app used to issue to their current ones, so
+// values cached or submitted from older forms still resolve.
+var legacyCodes = map[string]string{
+	"gy": "gl", // Galician was listed as "gy" before
+}
+
+// NormalizeCode returns the current code for a legacy language code.
+func NormalizeCode(code string) string {
+	if current, ok := legacyCodes[code]; ok {
+		return current
+	}
+	return code
+}
+
 // GetByCode group by ID
 func GetByCode(code string) Languages {
+	code = NormalizeCode(code)
 	for _, l := range LanguagesData {
 		if l.Code == code {
 			return l

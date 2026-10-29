@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -23,6 +24,12 @@ var (
 
 	googleUsage       = monthlyGoogleUsage
 	recordGoogleUsage = addMonthlyGoogleUsage
+
+	now = time.Now
+
+	// MyMemory is skipped until this time after its daily quota runs out.
+	myMemoryPausedUntil   time.Time
+	myMemoryPausedUntilMu sync.Mutex
 )
 
 func TranslateText(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
@@ -33,6 +40,9 @@ func TranslateText(targetLanguage string, text string, sourceLanguage string) (s
 			return result, detectedLanguage, nil
 		}
 		slog.Warn("translator failed, trying next", "error", err)
+		if errors.Is(err, errMyMemoryQuota) {
+			pauseMyMemory()
+		}
 		errs = append(errs, err)
 	}
 	return "", "", errors.Join(errs...)
@@ -40,7 +50,7 @@ func TranslateText(targetLanguage string, text string, sourceLanguage string) (s
 
 // translatorsFor returns the translators to try in order for text.
 func translatorsFor(text string) []translateFunc {
-	if len(text) > myMemoryMaxBytes {
+	if len(text) > myMemoryMaxBytes || myMemoryPaused() {
 		return []translateFunc{google}
 	}
 	if googleUsage() >= googleMonthlyCharLimit() {
@@ -82,4 +92,18 @@ func addMonthlyGoogleUsage(chars int) {
 	if _, err := utils.IncrementCounter(googleUsageKey(), int64(chars), 40*24*time.Hour); err != nil {
 		slog.Warn("failed to record google translate usage", "error", err)
 	}
+}
+
+// pauseMyMemory skips MyMemory until the next UTC midnight, when its daily
+// quota resets.
+func pauseMyMemory() {
+	myMemoryPausedUntilMu.Lock()
+	defer myMemoryPausedUntilMu.Unlock()
+	myMemoryPausedUntil = now().UTC().Truncate(24 * time.Hour).Add(24 * time.Hour)
+}
+
+func myMemoryPaused() bool {
+	myMemoryPausedUntilMu.Lock()
+	defer myMemoryPausedUntilMu.Unlock()
+	return now().Before(myMemoryPausedUntil)
 }

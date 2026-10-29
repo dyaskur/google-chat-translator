@@ -2,6 +2,7 @@ package translators
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"net/http"
@@ -21,6 +22,23 @@ const (
 	myMemoryTimeout  = 5 * time.Second
 )
 
+// errMyMemoryQuota means the daily free quota is used up, so there is no point
+// calling MyMemory again until it resets.
+var errMyMemoryQuota = errors.New("mymemory: daily quota exhausted")
+
+// myMemoryLanguages are the languages MyMemory translates well. For the rest
+// of the app's languages it either rejects the code or returns poor
+// translation-memory matches, so those go straight to Google.
+var myMemoryLanguages = map[string]bool{
+	"ar": true, "bg": true, "bn": true, "ca": true, "cs": true, "da": true,
+	"de": true, "el": true, "en": true, "es": true, "et": true, "fa": true,
+	"fi": true, "fr": true, "he": true, "hi": true, "hr": true, "hu": true,
+	"id": true, "it": true, "ja": true, "ko": true, "lt": true, "lv": true,
+	"ms": true, "nl": true, "no": true, "pl": true, "pt": true, "ro": true,
+	"ru": true, "sk": true, "sl": true, "sr": true, "sv": true, "th": true,
+	"tr": true, "uk": true, "ur": true, "vi": true, "zh": true, "zh-TW": true,
+}
+
 type myMemoryResponse struct {
 	ResponseData struct {
 		TranslatedText   string `json:"translatedText"`
@@ -35,6 +53,12 @@ type myMemoryResponse struct {
 func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
 	if len(text) > myMemoryMaxBytes {
 		return "", "", fmt.Errorf("mymemory: text longer than %d bytes", myMemoryMaxBytes)
+	}
+	if !myMemorySupports(targetLanguage) {
+		return "", "", fmt.Errorf("mymemory: unsupported target language %q", targetLanguage)
+	}
+	if sourceLanguage != "" && sourceLanguage != "auto" && !myMemorySupports(sourceLanguage) {
+		return "", "", fmt.Errorf("mymemory: unsupported source language %q", sourceLanguage)
 	}
 
 	source := myMemoryLanguageCode(sourceLanguage)
@@ -56,6 +80,9 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return "", "", errMyMemoryQuota
+	}
 	if resp.StatusCode != http.StatusOK {
 		return "", "", fmt.Errorf("mymemory: unexpected status code: %d", resp.StatusCode)
 	}
@@ -66,11 +93,14 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	}
 
 	status := strings.Trim(string(response.ResponseStatus), `"`)
+	if status == "429" {
+		return "", "", errMyMemoryQuota
+	}
 	if status != "200" {
 		return "", "", fmt.Errorf("mymemory: status %s: %s", status, response.ResponseDetails)
 	}
 	if response.QuotaFinished != nil && *response.QuotaFinished {
-		return "", "", fmt.Errorf("mymemory: daily quota finished")
+		return "", "", errMyMemoryQuota
 	}
 
 	result := response.ResponseData.TranslatedText
@@ -78,7 +108,7 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 		return "", "", fmt.Errorf("mymemory: empty translation")
 	}
 	if strings.HasPrefix(result, "MYMEMORY WARNING") {
-		return "", "", fmt.Errorf("mymemory: quota warning")
+		return "", "", errMyMemoryQuota
 	}
 
 	detected := sourceLanguage
@@ -90,6 +120,12 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	}
 
 	return html.UnescapeString(result), detected, nil
+}
+
+// myMemorySupports reports whether MyMemory handles the language, accepting
+// aliases such as "iw" for Hebrew.
+func myMemorySupports(code string) bool {
+	return myMemoryLanguages[code] || code == "iw"
 }
 
 // myMemoryLanguageCode maps the app's (Google) language codes to ones MyMemory accepts.

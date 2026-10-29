@@ -4,12 +4,17 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 func stubTranslators(t *testing.T, usage int64) *[]string {
 	t.Helper()
-	originalGoogle, originalMyMemory, originalUsage := google, myMemory, googleUsage
-	t.Cleanup(func() { google, myMemory, googleUsage = originalGoogle, originalMyMemory, originalUsage })
+	originalGoogle, originalMyMemory, originalUsage, originalNow := google, myMemory, googleUsage, now
+	t.Cleanup(func() {
+		google, myMemory, googleUsage, now = originalGoogle, originalMyMemory, originalUsage, originalNow
+		myMemoryPausedUntil = time.Time{}
+	})
+	myMemoryPausedUntil = time.Time{}
 
 	var calls []string
 	google = func(string, string, string) (string, string, error) {
@@ -94,5 +99,45 @@ func TestGoogleMonthlyCharLimitFromEnv(t *testing.T) {
 	t.Setenv("GOOGLE_MONTHLY_CHAR_LIMIT", "")
 	if limit := googleMonthlyCharLimit(); limit != defaultGoogleMonthlyCharLimit {
 		t.Errorf("limit: %d", limit)
+	}
+}
+
+func TestTranslateTextSkipsMyMemoryForTheRestOfTheDayAfterQuota(t *testing.T) {
+	calls := stubTranslators(t, defaultGoogleMonthlyCharLimit)
+	current := time.Date(2026, 10, 28, 3, 38, 0, 0, time.UTC)
+	now = func() time.Time { return current }
+	myMemory = func(string, string, string) (string, string, error) {
+		*calls = append(*calls, "mymemory")
+		return "", "", errMyMemoryQuota
+	}
+
+	for i := 0; i < 2; i++ {
+		if result, _, err := TranslateText("en", "halo", ""); err != nil || result != "from google" {
+			t.Fatalf("got %q, %v", result, err)
+		}
+	}
+	if strings.Join(*calls, ",") != "mymemory,google,google" {
+		t.Errorf("calls: %v", *calls)
+	}
+
+	*calls = nil
+	current = time.Date(2026, 10, 29, 0, 0, 1, 0, time.UTC)
+	TranslateText("en", "halo", "")
+	if strings.Join(*calls, ",") != "mymemory,google" {
+		t.Errorf("calls after reset: %v", *calls)
+	}
+}
+
+func TestTranslateTextDoesNotPauseMyMemoryOnOtherErrors(t *testing.T) {
+	calls := stubTranslators(t, defaultGoogleMonthlyCharLimit)
+	myMemory = func(string, string, string) (string, string, error) {
+		*calls = append(*calls, "mymemory")
+		return "", "", errors.New("invalid language")
+	}
+
+	TranslateText("en", "halo", "")
+	TranslateText("en", "halo", "")
+	if strings.Join(*calls, ",") != "mymemory,google,mymemory,google" {
+		t.Errorf("calls: %v", *calls)
 	}
 }
