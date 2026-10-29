@@ -1,5 +1,7 @@
 package utils
 
+import "strings"
+
 type Languages struct {
 	Language string   `json:"language,omitempty"`
 	Code     string   `json:"code,omitempty"`
@@ -198,6 +200,26 @@ func GetById(id int16) Languages {
 		}
 	}
 	return LanguagesData[0]
+}
+
+// GetByCommand finds a language by its slash command name, e.g. "/korean".
+// The leading slash is optional and matching ignores case.
+func GetByCommand(command string) (Languages, bool) {
+	command = strings.ToLower(strings.TrimSpace(command))
+	if command == "" {
+		return Languages{}, false
+	}
+	if !strings.HasPrefix(command, "/") {
+		command = "/" + command
+	}
+	for _, l := range LanguagesData {
+		for _, c := range l.Commands {
+			if c == command {
+				return l, true
+			}
+		}
+	}
+	return Languages{}, false
 }
 
 func GroupByCommand() map[string]Languages {
