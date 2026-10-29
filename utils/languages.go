@@ -41,7 +41,7 @@ var LanguagesData = []Languages{
 	{Language: "Finnish", Code: "fi", IDs: []int16{42, 218}, Commands: []string{"/finnish"}},
 	{Language: "French", Code: "fr", IDs: []int16{43}, Commands: []string{"/french"}},
 	{Language: "Frisian", Code: "fy", IDs: []int16{44}, Commands: []string{"/frisian"}},
-	{Language: "Galician", Code: "gy", IDs: []int16{48}, Commands: []string{"/galician"}},
+	{Language: "Galician", Code: "gl", IDs: []int16{48}, Commands: []string{"/galician"}},
 	{Language: "Georgian", Code: "ka", IDs: []int16{46}, Commands: []string{"/georgian"}},
 	{Language: "German", Code: "de", IDs: []int16{47, 219}, Commands: []string{"/german", "/deutch"}},
 	{Language: "Greek", Code: "el", IDs: []int16{49}, Commands: []string{"/greek"}},

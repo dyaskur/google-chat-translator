@@ -105,6 +105,19 @@ func TestMyMemoryTranslateReportsHTTP429AsQuota(t *testing.T) {
 	}
 }
 
+func TestMyMemoryTranslateSkipsUnsupportedLanguagesWithoutCallingTheAPI(t *testing.T) {
+	serveMyMemory(t, `{}`, func(r *http.Request) {
+		t.Errorf("unexpected request: %s", r.URL)
+	})
+
+	if _, _, err := myMemoryTranslate("jv", "halo", ""); err == nil {
+		t.Error("expected error for unsupported target")
+	}
+	if _, _, err := myMemoryTranslate("en", "maayong buntag", "ceb"); err == nil {
+		t.Error("expected error for unsupported source")
+	}
+}
+
 func TestMyMemoryTranslateRejectsLongText(t *testing.T) {
 	long := make([]byte, myMemoryMaxBytes+1)
 	if _, _, err := myMemoryTranslate("en", string(long), "id"); err == nil {

@@ -26,6 +26,19 @@ const (
 // calling MyMemory again until it resets.
 var errMyMemoryQuota = errors.New("mymemory: daily quota exhausted")
 
+// myMemoryLanguages are the languages MyMemory translates well. For the rest
+// of the app's languages it either rejects the code or returns poor
+// translation-memory matches, so those go straight to Google.
+var myMemoryLanguages = map[string]bool{
+	"ar": true, "bg": true, "bn": true, "ca": true, "cs": true, "da": true,
+	"de": true, "el": true, "en": true, "es": true, "et": true, "fa": true,
+	"fi": true, "fr": true, "he": true, "hi": true, "hr": true, "hu": true,
+	"id": true, "it": true, "ja": true, "ko": true, "lt": true, "lv": true,
+	"ms": true, "nl": true, "no": true, "pl": true, "pt": true, "ro": true,
+	"ru": true, "sk": true, "sl": true, "sr": true, "sv": true, "th": true,
+	"tr": true, "uk": true, "ur": true, "vi": true, "zh": true, "zh-TW": true,
+}
+
 type myMemoryResponse struct {
 	ResponseData struct {
 		TranslatedText   string `json:"translatedText"`
@@ -40,6 +53,12 @@ type myMemoryResponse struct {
 func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string) (string, string, error) {
 	if len(text) > myMemoryMaxBytes {
 		return "", "", fmt.Errorf("mymemory: text longer than %d bytes", myMemoryMaxBytes)
+	}
+	if !myMemoryLanguages[targetLanguage] {
+		return "", "", fmt.Errorf("mymemory: unsupported target language %q", targetLanguage)
+	}
+	if sourceLanguage != "" && sourceLanguage != "auto" && !myMemoryLanguages[sourceLanguage] {
+		return "", "", fmt.Errorf("mymemory: unsupported source language %q", sourceLanguage)
 	}
 
 	source := myMemoryLanguageCode(sourceLanguage)
