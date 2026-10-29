@@ -96,6 +96,8 @@ func getFormInput(configKey string) types.FormInput {
 	if lastInputJSON != "" {
 		_ = json.Unmarshal([]byte(lastInputJSON), &formInput)
 	}
+	formInput.Source = utils.NormalizeCode(formInput.Source)
+	formInput.Target = utils.NormalizeCode(formInput.Target)
 	return formInput
 }
 

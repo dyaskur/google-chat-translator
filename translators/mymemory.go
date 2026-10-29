@@ -54,10 +54,10 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	if len(text) > myMemoryMaxBytes {
 		return "", "", fmt.Errorf("mymemory: text longer than %d bytes", myMemoryMaxBytes)
 	}
-	if !myMemoryLanguages[targetLanguage] {
+	if !myMemorySupports(targetLanguage) {
 		return "", "", fmt.Errorf("mymemory: unsupported target language %q", targetLanguage)
 	}
-	if sourceLanguage != "" && sourceLanguage != "auto" && !myMemoryLanguages[sourceLanguage] {
+	if sourceLanguage != "" && sourceLanguage != "auto" && !myMemorySupports(sourceLanguage) {
 		return "", "", fmt.Errorf("mymemory: unsupported source language %q", sourceLanguage)
 	}
 
@@ -120,6 +120,12 @@ func myMemoryTranslate(targetLanguage string, text string, sourceLanguage string
 	}
 
 	return html.UnescapeString(result), detected, nil
+}
+
+// myMemorySupports reports whether MyMemory handles the language, accepting
+// aliases such as "iw" for Hebrew.
+func myMemorySupports(code string) bool {
+	return myMemoryLanguages[code] || code == "iw"
 }
 
 // myMemoryLanguageCode maps the app's (Google) language codes to ones MyMemory accepts.

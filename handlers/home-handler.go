@@ -55,8 +55,8 @@ func extractFormInput(event chat.CommonEventObject) types.FormInput {
 	}
 
 	return types.FormInput{
-		Source: getValue("source"),
-		Target: getValue("target"),
+		Source: utils.NormalizeCode(getValue("source")),
+		Target: utils.NormalizeCode(getValue("target")),
 		Text:   getValue("text"),
 		Result: getValue("result"),
 	}
@@ -107,6 +107,8 @@ func handleInitialLoad(configKey string) RenderAction {
 			slog.Error("Error unmarshaling cached input: " + err.Error())
 		}
 	}
+	formInput.Source = utils.NormalizeCode(formInput.Source)
+	formInput.Target = utils.NormalizeCode(formInput.Target)
 
 	return RenderAction{
 		Action: Action{

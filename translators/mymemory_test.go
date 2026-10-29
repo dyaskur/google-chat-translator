@@ -118,6 +118,19 @@ func TestMyMemoryTranslateSkipsUnsupportedLanguagesWithoutCallingTheAPI(t *testi
 	}
 }
 
+func TestMyMemoryTranslateAcceptsHebrewAlias(t *testing.T) {
+	serveMyMemory(t, `{"responseData":{"translatedText":"shalom"},"responseStatus":200}`,
+		func(r *http.Request) {
+			if got := r.URL.Query().Get("langpair"); got != "he|en" {
+				t.Errorf("langpair: %s", got)
+			}
+		})
+
+	if _, _, err := myMemoryTranslate("en", "שלום", "iw"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestMyMemoryTranslateRejectsLongText(t *testing.T) {
 	long := make([]byte, myMemoryMaxBytes+1)
 	if _, _, err := myMemoryTranslate("en", string(long), "id"); err == nil {
